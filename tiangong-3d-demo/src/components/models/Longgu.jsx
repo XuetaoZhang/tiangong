@@ -27,11 +27,11 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
 
   const isHi = (id) => highlightedPartId === id
   const partMat = (id, color, emissive) => new THREE.MeshStandardMaterial({
-    color: isHi(id) ? '#E8C88C' : color,
-    emissive: isHi(id) ? (emissive || '#C75B2A') : '#000000',
-    emissiveIntensity: isHi(id) ? 0.6 : 0,
-    roughness: 0.7,
-    metalness: 0.1,
+    color: isHi(id) ? '#FFE4B5' : color,
+    emissive: isHi(id) ? (emissive || '#FFA500') : '#000000',
+    emissiveIntensity: isHi(id) ? 1.2 : 0,
+    roughness: 0.6,
+    metalness: 0.15,
   })
 
   // 链节位置（沿槽分布）

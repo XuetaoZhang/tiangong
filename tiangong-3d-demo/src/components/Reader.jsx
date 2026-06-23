@@ -5,6 +5,7 @@ import Scene3D from './Scene3D.jsx'
 import Toolbar from './Toolbar.jsx'
 import AICard from './AICard.jsx'
 import TranslationOverlay from './TranslationOverlay.jsx'
+import IllustrationBg from './IllustrationBg.jsx'
 
 export default function Reader() {
   const artifactId = useStore((s) => s.artifactId)
@@ -41,11 +42,13 @@ export default function Reader() {
       {/* 桌面端：书本展开布局 */}
       <div className="reader-desktop">
         <div className={`book-stage ${entered ? 'entered' : ''} ${pageTurning ? 'turning' : ''}`}>
-          {/* 书本阴影底 */}
+          {/* 书本底部阴影 */}
           <div className="book-shadow" />
 
           {/* 左页：古文 */}
-          <div className="book-page book-left paper-texture">
+          <div className="book-page book-left">
+            <div className="page-texture-overlay" />
+            <div className="page-edge-curl left" />
             <div className="page-header">
               <span className="page-chapter-mark">{artifact.chapter}</span>
             </div>
@@ -58,14 +61,25 @@ export default function Reader() {
           </div>
 
           {/* 书脊 */}
-          <div className="book-spine" />
+          <div className="book-spine">
+            <div className="spine-shadow-left" />
+            <div className="spine-shadow-right" />
+          </div>
 
-          {/* 右页：3D 浮空投影 */}
-          <div className="book-page book-right paper-texture">
+          {/* 右页：古籍插图底图 + 3D 浮空投影 */}
+          <div className="book-page book-right">
+            <div className="page-texture-overlay" />
+            <div className="page-edge-curl right" />
+            {/* 古籍插图底图（原版《天工开物》插图风格） */}
+            <div className="illustration-bg">
+              <IllustrationBg artifact={artifact} />
+            </div>
             <div className="page-header">
               <span className="page-illus-mark">〔 {artifact.name}图 〕</span>
             </div>
+            {/* 3D 浮空投影区 */}
             <div className="scene-container">
+              <div className="scene-glow" />
               <Scene3D artifact={artifact} />
               <div className="scene-hint">拖拽旋转 · 滚轮缩放 · 点击热点 ●</div>
             </div>
@@ -132,9 +146,10 @@ function AncientText({ artifact }) {
   const autoTranslate = useStore((s) => s.autoTranslate)
   const segRefs = useRef({})
 
-  // 当从器物点击部件时，滚动到对应古文段落
+  // 当从器物点击部件时（highlightSource==='part'），滚动到对应古文段落
   useEffect(() => {
-    if (highlightedPartId && segRefs.current) {
+    const st = useStore.getState()
+    if (highlightedPartId && st.highlightSource === 'part') {
       const targetSeg = artifact.textSegments.find((s) => s.partId === highlightedPartId)
       if (targetSeg && segRefs.current[targetSeg.id]) {
         segRefs.current[targetSeg.id].scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -159,7 +174,9 @@ function AncientText({ artifact }) {
               }
             }}
             onMouseLeave={() => {
-              if (isLinked) setHighlight(null, null)
+              // 离开古文：仅当高亮来源是文字悬停时才清除（保留器物点击的选中高亮）
+              const st = useStore.getState()
+              if (st.highlightSource === 'text') setHighlight(null, null)
               setTranslationHover(null)
             }}
             onClick={() => {
@@ -219,66 +236,151 @@ function ReaderStyles() {
       .ai-btn:hover { background: #A8481F; transform: translateY(-1px); }
 
       /* ===== 桌面端书本舞台 ===== */
-      .reader-desktop { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+      .reader-desktop { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 0 1rem; }
       .book-stage {
         position: relative; display: flex;
-        width: min(92vw, 1100px); height: min(78vh, 680px);
-        transform: perspective(1500px) rotateX(2deg) scale(0.92);
-        opacity: 0; transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        width: min(94vw, 1180px); height: min(80vh, 720px);
+        transform: perspective(1800px) rotateX(3deg) scale(0.9);
+        opacity: 0; transition: all 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
       }
-      .book-stage.entered { transform: perspective(1500px) rotateX(2deg) scale(1); opacity: 1; }
+      .book-stage.entered { transform: perspective(1800px) rotateX(3deg) scale(1); opacity: 1; }
       .book-stage.turning { animation: bookShake 0.8s ease; }
       @keyframes bookShake {
-        0%, 100% { transform: perspective(1500px) rotateX(2deg) scale(1); }
-        50% { transform: perspective(1500px) rotateX(2deg) scale(0.98) translateY(4px); }
+        0%, 100% { transform: perspective(1800px) rotateX(3deg) scale(1); }
+        50% { transform: perspective(1800px) rotateX(3deg) scale(0.98) translateY(4px); }
       }
 
+      /* 书本底部厚重阴影 */
       .book-shadow {
-        position: absolute; bottom: -20px; left: 5%; right: 5%; height: 30px;
-        background: radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%);
-        filter: blur(8px); z-index: 0;
+        position: absolute; bottom: -28px; left: 4%; right: 4%; height: 40px;
+        background: radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, transparent 70%);
+        filter: blur(12px); z-index: 0;
       }
 
+      /* 书页本体 —— 宣纸质感 */
       .book-page {
-        flex: 1; position: relative; padding: 1.5rem 1.8rem;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        flex: 1; position: relative; padding: 1.6rem 1.9rem;
         overflow: hidden;
+        background:
+          linear-gradient(135deg, #F4ECD8 0%, #EDE3CC 50%, #E8DCC0 100%);
+        box-shadow: 0 12px 48px rgba(0,0,0,0.35);
       }
       .book-left {
-        border-radius: 4px 0 0 4px;
-        box-shadow: inset -8px 0 12px -8px rgba(0,0,0,0.3), 0 10px 40px rgba(0,0,0,0.3);
+        border-radius: 6px 0 0 6px;
+        box-shadow:
+          inset -10px 0 18px -10px rgba(58,37,24,0.45),
+          inset 0 0 60px rgba(139,69,19,0.06),
+          0 12px 48px rgba(0,0,0,0.35);
       }
       .book-right {
-        border-radius: 0 4px 4px 0;
-        box-shadow: inset 8px 0 12px -8px rgba(0,0,0,0.3), 0 10px 40px rgba(0,0,0,0.3);
+        border-radius: 0 6px 6px 0;
+        box-shadow:
+          inset 10px 0 18px -10px rgba(58,37,24,0.45),
+          inset 0 0 60px rgba(139,69,19,0.06),
+          0 12px 48px rgba(0,0,0,0.35);
         display: flex; flex-direction: column;
       }
-      .book-spine {
-        width: 16px; align-self: stretch;
-        background: linear-gradient(90deg, rgba(0,0,0,0.3), rgba(58,37,24,0.6), rgba(0,0,0,0.3));
-        box-shadow: 0 0 12px rgba(0,0,0,0.4);
-        z-index: 2;
+
+      /* 宣纸纹理叠加层 */
+      .page-texture-overlay {
+        position: absolute; inset: 0; pointer-events: none; z-index: 1;
+        background-image:
+          radial-gradient(circle at 15% 25%, rgba(139,69,19,0.05) 0%, transparent 45%),
+          radial-gradient(circle at 85% 75%, rgba(139,69,19,0.04) 0%, transparent 45%),
+          radial-gradient(circle at 50% 50%, rgba(232,200,140,0.08) 0%, transparent 60%),
+          repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(139,69,19,0.015) 3px, rgba(139,69,19,0.015) 4px),
+          repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(139,69,19,0.012) 3px, rgba(139,69,19,0.012) 4px);
+        mix-blend-mode: multiply;
       }
 
-      .page-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+      /* 页面边缘卷曲 */
+      .page-edge-curl {
+        position: absolute; pointer-events: none; z-index: 2;
+        width: 24px; height: 100%; top: 0;
+      }
+      .page-edge-curl.left {
+        left: 0;
+        background: linear-gradient(90deg, rgba(58,37,24,0.18) 0%, transparent 100%);
+      }
+      .page-edge-curl.right {
+        right: 0;
+        background: linear-gradient(270deg, rgba(58,37,24,0.18) 0%, transparent 100%);
+      }
+
+      /* 书脊 —— 中间立体凹陷 */
+      .book-spine {
+        width: 22px; align-self: stretch; position: relative; z-index: 3;
+        background:
+          linear-gradient(90deg,
+            rgba(0,0,0,0.05) 0%,
+            rgba(58,37,24,0.35) 30%,
+            rgba(42,24,16,0.55) 50%,
+            rgba(58,37,24,0.35) 70%,
+            rgba(0,0,0,0.05) 100%);
+      }
+      .spine-shadow-left {
+        position: absolute; left: -8px; top: 0; bottom: 0; width: 12px;
+        background: linear-gradient(270deg, rgba(0,0,0,0.25), transparent);
+      }
+      .spine-shadow-right {
+        position: absolute; right: -8px; top: 0; bottom: 0; width: 12px;
+        background: linear-gradient(90deg, rgba(0,0,0,0.25), transparent);
+      }
+
+      .page-header { display: flex; justify-content: space-between; margin-bottom: 1rem; position: relative; z-index: 5; }
       .page-chapter-mark, .page-illus-mark {
         font-family: var(--font-serif); font-size: 0.78rem; color: var(--muted);
         letter-spacing: 0.1em;
       }
       .page-footer-mark {
-        position: absolute; bottom: 0.8rem; left: 1.8rem;
+        position: absolute; bottom: 0.8rem; left: 1.9rem; z-index: 5;
         font-size: 0.72rem; color: var(--muted);
       }
-      .page-footer-mark.right { left: auto; right: 1.8rem; }
+      .page-footer-mark.right { left: auto; right: 1.9rem; }
       .bookmark { color: var(--accent2); }
 
       /* 线装痕迹 */
       .binding-holes {
-        position: absolute; left: 0.4rem; top: 0; bottom: 0; width: 8px;
+        position: absolute; left: 0.5rem; top: 0; bottom: 0; width: 8px; z-index: 4;
         background:
-          radial-gradient(circle at 4px 20%, rgba(58,37,24,0.4) 2px, transparent 3px),
-          radial-gradient(circle at 4px 50%, rgba(58,37,24,0.4) 2px, transparent 3px),
-          radial-gradient(circle at 4px 80%, rgba(58,37,24,0.4) 2px, transparent 3px);
+          radial-gradient(circle at 4px 18%, rgba(42,24,16,0.5) 2px, transparent 3px),
+          radial-gradient(circle at 4px 50%, rgba(42,24,16,0.5) 2px, transparent 3px),
+          radial-gradient(circle at 4px 82%, rgba(42,24,16,0.5) 2px, transparent 3px);
+      }
+
+      /* ===== 古籍插图底图（右页） ===== */
+      .illustration-bg {
+        position: absolute; inset: 2.5rem 2rem 2.5rem 2rem; z-index: 2;
+        opacity: 0.32; pointer-events: none;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .illus-svg {
+        width: 80%; height: 80%; max-width: 360px;
+        filter: drop-shadow(0 2px 4px rgba(139,69,19,0.1));
+      }
+
+      /* ===== 3D 场景容器（浮空在插图上方） ===== */
+      .scene-container {
+        flex: 1; position: relative; z-index: 4; border-radius: 4px; overflow: hidden;
+      }
+      .scene-container.mobile { height: 100%; }
+      /* 浮空光晕 —— 器物下方的"投影光" */
+      .scene-glow {
+        position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%);
+        width: 60%; height: 30px; z-index: 0; pointer-events: none;
+        background: radial-gradient(ellipse, rgba(232,200,140,0.35) 0%, transparent 70%);
+        filter: blur(8px);
+        animation: glowPulse 4s ease-in-out infinite;
+      }
+      @keyframes glowPulse {
+        0%, 100% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
+        50% { opacity: 0.9; transform: translateX(-50%) scaleX(1.1); }
+      }
+      .scene-hint {
+        position: absolute; bottom: 0.6rem; left: 50%; transform: translateX(-50%);
+        font-size: 0.72rem; color: var(--muted); z-index: 10;
+        background: rgba(247,244,239,0.75); padding: 0.2rem 0.7rem; border-radius: 100px;
+        backdrop-filter: blur(4px); pointer-events: none; white-space: nowrap;
       }
 
       /* ===== 古文竖排 ===== */
@@ -287,7 +389,7 @@ function ReaderStyles() {
         height: calc(100% - 3rem); overflow-y: auto;
         font-family: var(--font-serif); font-size: 1.15rem; line-height: 2.2;
         color: var(--ink); padding: 0.5rem 0.5rem 0.5rem 0;
-        direction: rtl;
+        direction: rtl; position: relative; z-index: 5;
         scrollbar-width: thin;
       }
       .text-segment {
@@ -298,28 +400,18 @@ function ReaderStyles() {
         cursor: pointer; border-bottom: 2px solid rgba(199,91,42,0.3);
       }
       .text-segment.linked:hover {
-        background: rgba(232,200,140,0.35);
+        background: rgba(232,200,140,0.45);
         border-bottom-color: var(--accent2);
       }
       .text-segment.highlighted {
-        background: rgba(232,200,140,0.5);
+        background: rgba(232,200,140,0.6);
         border-bottom: 2px solid var(--accent2);
-        box-shadow: 0 0 0 1px rgba(199,91,42,0.3);
-        animation: textGlow 0.3s ease;
+        box-shadow: 0 0 8px rgba(199,91,42,0.4);
+        animation: textGlow 0.4s ease;
       }
       @keyframes textGlow {
-        from { background: rgba(232,200,140,0.8); }
-        to { background: rgba(232,200,140,0.5); }
-      }
-
-      /* ===== 3D 场景容器 ===== */
-      .scene-container { flex: 1; position: relative; border-radius: 4px; overflow: hidden; }
-      .scene-container.mobile { height: 100%; }
-      .scene-hint {
-        position: absolute; bottom: 0.6rem; left: 50%; transform: translateX(-50%);
-        font-size: 0.72rem; color: var(--muted);
-        background: rgba(247,244,239,0.7); padding: 0.2rem 0.7rem; border-radius: 100px;
-        backdrop-filter: blur(4px); pointer-events: none; white-space: nowrap;
+        0% { background: rgba(232,200,140,0.9); box-shadow: 0 0 16px rgba(199,91,42,0.6); }
+        100% { background: rgba(232,200,140,0.6); box-shadow: 0 0 8px rgba(199,91,42,0.4); }
       }
 
       /* ===== 翻页按钮 ===== */

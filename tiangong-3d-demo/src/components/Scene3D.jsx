@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Html, ContactShadows, Float } from '@react-three/drei'
+import { OrbitControls, Html, Float } from '@react-three/drei'
 import * as THREE from 'three'
 import { useStore } from '../store/useStore.js'
 import Tongche from './models/Tongche.jsx'
@@ -36,6 +36,7 @@ function CameraRig({ viewPreset }) {
 
 export default function Scene3D({ artifact }) {
   const highlightedPartId = useStore((s) => s.highlightedPartId)
+  const selectedPartId = useStore((s) => s.selectedPartId)
   const explode = useStore((s) => s.explode)
   const simulate = useStore((s) => s.simulate)
   const simParam = useStore((s) => s.simParam)
@@ -47,6 +48,8 @@ export default function Scene3D({ artifact }) {
 
   const handleSelectPart = (id) => {
     selectPart(id)
+    // 点击热点 → 同时高亮部件 + 触发古文滚动联动
+    useStore.getState().setHighlight(id, 'part')
   }
 
   return (
@@ -94,6 +97,16 @@ export default function Scene3D({ artifact }) {
         )}
       </Float>
 
+      {/* 书页平面 —— 接收器物阴影投射 */}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -2.2, 0]}
+        receiveShadow
+      >
+        <planeGeometry args={[10, 7]} />
+        <shadowMaterial opacity={0.35} />
+      </mesh>
+
       {/* 热点标记 */}
       {artifact.parts.map((p) => (
         <Hotspot
@@ -101,24 +114,19 @@ export default function Scene3D({ artifact }) {
           position={p.hotspot}
           partId={p.id}
           name={p.name}
-          active={highlightedPartId === p.id}
+          active={highlightedPartId === p.id || selectedPartId === p.id}
           onClick={() => handleSelectPart(p.id)}
           onHover={(on) => {
-            // 悬停热点 → 高亮部件
-            useStore.getState().setHighlight(on ? p.id : null, 'part')
+            // 悬停热点 → 临时高亮部件（不影响已选中的）
+            const st = useStore.getState()
+            if (on) {
+              st.setHighlight(p.id, 'part')
+            } else if (st.highlightSource === 'part' && st.selectedPartId !== p.id) {
+              st.setHighlight(null, null)
+            }
           }}
         />
       ))}
-
-      {/* 阴影投射到"书页"平面 */}
-      <ContactShadows
-        position={[0, -2.2, 0]}
-        opacity={0.35}
-        scale={8}
-        blur={2.5}
-        far={4}
-        color="#3A2518"
-      />
 
       <OrbitControls
         enablePan={true}
