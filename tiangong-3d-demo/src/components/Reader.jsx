@@ -73,7 +73,7 @@ export default function Reader() {
             <div className="spine-shadow-right" />
           </div>
 
-          {/* 右页：古籍插图底图 + 3D 浮空投影 */}
+          {/* 右页：古籍插图底图（3D 器物悬浮其上） */}
           <div className="book-page book-right">
             <div className="page-texture-overlay" />
             <div className="page-edge-curl right" />
@@ -84,12 +84,6 @@ export default function Reader() {
             <div className="page-header">
               <span className="page-illus-mark">〔 {artifact.name}图 〕</span>
             </div>
-            {/* 3D 浮空投影区 */}
-            <div className="scene-container" key={artifact.id}>
-              <div className="scene-glow" />
-              <Scene3D artifact={artifact} />
-              <div className="scene-hint">拖拽旋转 · 滚轮缩放 · 点击热点 ●</div>
-            </div>
             <div className="page-footer-mark right">
               <span>天工开物 · {artifact.chapter}</span>
             </div>
@@ -97,6 +91,13 @@ export default function Reader() {
 
           {/* 翻页动画层 */}
           {pageTurning && <div className="page-flip" />}
+        </div>
+
+        {/* 3D 器物悬浮层 —— 独立于书本，正立悬浮在书本上空 */}
+        <div className="floating-3d-layer" key={artifact.id}>
+          <div className="scene-glow" />
+          <Scene3D artifact={artifact} />
+          <div className="scene-hint">拖拽旋转 · 滚轮缩放 · 点击热点 ●</div>
         </div>
 
         {/* 翻页按钮 */}
@@ -243,18 +244,23 @@ function ReaderStyles() {
       .ai-btn:hover { background: #A8481F; transform: translateY(-1px); }
 
       /* ===== 桌面端书本舞台 ===== */
-      .reader-desktop { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 0 1rem; }
+      /* 左斜前方视角：书本后仰 + 微偏，3D 器物悬浮其上 */
+      .reader-desktop {
+        flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+        padding: 0 1rem; perspective: 1400px; perspective-origin: 50% 30%;
+      }
       .book-stage {
         position: relative; display: flex;
-        width: min(94vw, 1180px); height: min(80vh, 720px);
-        transform: perspective(1800px) rotateX(3deg) scale(0.9);
+        width: min(94vw, 1180px); height: min(78vh, 680px);
+        transform: rotateX(20deg) rotateY(-6deg) scale(0.9);
+        transform-style: preserve-3d;
         opacity: 0; transition: all 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
       }
-      .book-stage.entered { transform: perspective(1800px) rotateX(3deg) scale(1); opacity: 1; }
+      .book-stage.entered { transform: rotateX(20deg) rotateY(-6deg) scale(1); opacity: 1; }
       .book-stage.turning { animation: bookShake 0.8s ease; }
       @keyframes bookShake {
-        0%, 100% { transform: perspective(1800px) rotateX(3deg) scale(1); }
-        50% { transform: perspective(1800px) rotateX(3deg) scale(0.98) translateY(4px); }
+        0%, 100% { transform: rotateX(20deg) rotateY(-6deg) scale(1); }
+        50% { transform: rotateX(20deg) rotateY(-6deg) scale(0.98) translateY(4px); }
       }
 
       /* 书本底部厚重阴影 */
@@ -369,22 +375,23 @@ function ReaderStyles() {
         filter: drop-shadow(0 2px 4px rgba(139,69,19,0.1));
       }
 
-      /* ===== 3D 场景容器（浮空在插图上方） ===== */
-      .scene-container {
-        flex: 1; position: relative; z-index: 4; border-radius: 4px; overflow: hidden;
+      /* ===== 3D 器物悬浮层（独立于书本，正立悬浮在书本上空） ===== */
+      .floating-3d-layer {
+        position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        width: 50%; height: 100%; z-index: 20; pointer-events: auto;
       }
-      .scene-container.mobile { height: 100%; }
-      /* 浮空光晕 —— 器物下方的"投影光" */
+      .floating-3d-layer canvas { width: 100% !important; height: 100% !important; }
+      /* 浮空光晕 —— 器物下方的"投影光"（极轻微暖调衬托，不抢接触阴影的戏） */
       .scene-glow {
-        position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%);
-        width: 60%; height: 30px; z-index: 0; pointer-events: none;
-        background: radial-gradient(ellipse, rgba(232,200,140,0.35) 0%, transparent 70%);
-        filter: blur(8px);
-        animation: glowPulse 4s ease-in-out infinite;
+        position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%);
+        width: 55%; height: 28px; z-index: 0; pointer-events: none;
+        background: radial-gradient(ellipse, rgba(232,200,140,0.2) 0%, transparent 70%);
+        filter: blur(12px);
+        animation: glowPulse 5s ease-in-out infinite;
       }
       @keyframes glowPulse {
-        0%, 100% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
-        50% { opacity: 0.9; transform: translateX(-50%) scaleX(1.1); }
+        0%, 100% { opacity: 0.45; transform: translateX(-50%) scaleX(1); }
+        50% { opacity: 0.65; transform: translateX(-50%) scaleX(1.06); }
       }
       .scene-hint {
         position: absolute; bottom: 0.6rem; left: 50%; transform: translateX(-50%);

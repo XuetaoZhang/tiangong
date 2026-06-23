@@ -29,9 +29,10 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
   const partMat = (id, color, emissive) => new THREE.MeshStandardMaterial({
     color: isHi(id) ? '#FFE4B5' : color,
     emissive: isHi(id) ? (emissive || '#FFA500') : '#000000',
-    emissiveIntensity: isHi(id) ? 1.2 : 0,
-    roughness: 0.6,
-    metalness: 0.15,
+    emissiveIntensity: isHi(id) ? 1.0 : 0,
+    roughness: isHi(id) ? 0.45 : 0.78,  // 真木更粗糙；高亮时稍光滑更跳
+    metalness: 0.0,                      // 木头无金属，归零消除塑料感
+    flatShading: false,
   })
 
   // 链节位置（沿槽分布）

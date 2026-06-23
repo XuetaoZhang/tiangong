@@ -1,17 +1,17 @@
 import React, { useRef, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Html, Float } from '@react-three/drei'
+import { OrbitControls, Html, Float, Environment, ContactShadows } from '@react-three/drei'
 import * as THREE from 'three'
 import { useStore } from '../store/useStore.js'
 import Tongche from './models/Tongche.jsx'
 import Longgu from './models/Longgu.jsx'
 
-// 视角预设
+// 视角预设（配合左斜前方俯视书本的视角）
 const VIEW_PRESETS = {
-  default: { position: [0, 0.5, 5.5], target: [0, 0, 0] },
-  front: { position: [0, 0, 6], target: [0, 0, 0] },
-  side: { position: [6, 0.5, 0.5], target: [0, 0, 0] },
-  top: { position: [0.01, 6, 0.5], target: [0, 0, 0] },
+  default: { position: [0.5, 2.2, 5.2], target: [0, 0.2, 0] },
+  front: { position: [0, 1.2, 5.5], target: [0, 0.2, 0] },
+  side: { position: [5.5, 1.5, 1], target: [0, 0.2, 0] },
+  top: { position: [0.01, 5.5, 1.5], target: [0, 0, 0] },
 }
 
 function CameraRig({ viewPreset }) {
@@ -55,31 +55,27 @@ export default function Scene3D({ artifact }) {
   return (
     <Canvas
       shadows
-      camera={{ position: [0, 0.5, 5.5], fov: 45 }}
+      camera={{ position: [0.5, 2.2, 5.2], fov: 42 }}
       dpr={quality === 'high' ? [1, 2] : quality === 'medium' ? [1, 1.5] : 1}
       gl={{ antialias: quality !== 'low', alpha: true, preserveDrawingBuffer: false }}
       frameloop="always"
     >
       <CameraRig viewPreset={viewPreset} />
 
-      {/* 灯光：营造书卷质感 */}
-      <ambientLight intensity={0.5} />
+      {/* 环境光照 IBL —— 木料受光的层次来源（不画背景，只做光照） */}
+      <Environment preset="apartment" environmentIntensity={0.6} />
+
+      {/* 灯光：主光塑造体积 + 暖色补光压暗部 */}
+      <ambientLight intensity={0.25} />
       <directionalLight
         position={[3, 6, 4]}
-        intensity={1.1}
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-camera-left={-4}
-        shadow-camera-right={4}
-        shadow-camera-top={4}
-        shadow-camera-bottom={-4}
+        intensity={1.0}
+        color="#FFF1D6"
       />
-      <directionalLight position={[-3, 2, -2]} intensity={0.3} color="#E8C88C" />
-      <pointLight position={[0, 3, 2]} intensity={0.4} color="#F4ECD8" />
+      <directionalLight position={[-3, 2, -2]} intensity={0.25} color="#E8C88C" />
 
-      {/* 浮空效果 */}
-      <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.25} floatingRange={[-0.05, 0.05]}>
+      {/* 浮空效果 —— 轻微上下呼吸 */}
+      <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.3} floatingRange={[-0.06, 0.06]}>
         {artifact.id === 'tongche' && (
           <Tongche
             highlightedPartId={highlightedPartId}
@@ -98,15 +94,16 @@ export default function Scene3D({ artifact }) {
         )}
       </Float>
 
-      {/* 书页平面 —— 接收器物阴影投射 */}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -2.2, 0]}
-        receiveShadow
-      >
-        <planeGeometry args={[10, 7]} />
-        <shadowMaterial opacity={0.35} />
-      </mesh>
+      {/* 柔和接触阴影 —— 悬浮感的灵魂：随器物形状的深棕软影投在书页上 */}
+      <ContactShadows
+        position={[0, -2.0, 0]}
+        scale={8}
+        resolution={1024}
+        blur={2.6}
+        opacity={0.5}
+        far={3}
+        color="#3A2518"
+      />
 
       {/* 热点标记 */}
       {artifact.parts.map((p) => (
