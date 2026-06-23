@@ -1,0 +1,24 @@
+{
+  "name": "tiangong-3d-book",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "天工开物·3D 书 — 让古代工程智慧在指尖活起来 (TRAE AI 创造力大赛)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.114.0",
+    "@react-three/fiber": "^8.17.10",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.169.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.3",
+    "vite": "^5.4.10"
+  }
+}
