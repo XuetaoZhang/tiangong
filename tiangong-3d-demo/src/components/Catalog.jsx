@@ -107,7 +107,7 @@ export default function Catalog() {
             <div className="spine-shadow-right" />
           </div>
 
-          {/* 右页：目录正文（flex 竖排，从右往左，可点击） */}
+          {/* 右页：目录正文（writing-mode 竖排，flex column 布局，可点击） */}
           <div className="book-page book-right catalog-right">
             <div className="page-texture-overlay" />
             <div className="page-edge-curl right" />
@@ -115,12 +115,10 @@ export default function Catalog() {
             <div className="catalog-vertical">
               {tocData.map((juan) => (
                 <div className="toc-juan" key={juan.juan}>
-                  <div className="toc-juan-title">{juan.juan.split('').map((c,i)=><span key={i}>{c}</span>)}</div>
+                  <div className="toc-juan-title">{juan.juan}</div>
                   {juan.chapters.map((ch) => (
                     <div className="toc-chapter" key={ch.name}>
-                      <div className="toc-ch-name">
-                        {ch.name.split('').map((c,i)=><span key={i}>{c}</span>)}
-                      </div>
+                      <div className="toc-ch-name">{ch.name}</div>
                       {ch.items.map((item) => (
                         <button
                           key={item.id}
@@ -129,12 +127,7 @@ export default function Catalog() {
                           onClick={() => handleSelect(item)}
                           disabled={item.soon}
                         >
-                          <span className="toc-item-name">
-                            {item.name.split('').map((c,i)=><span key={i}>{c}</span>)}
-                          </span>
-                          <span className="toc-item-page">
-                            {item.page.split('').map((c,i)=><span key={i}>{c}</span>)}
-                          </span>
+                          {item.name}　{item.page}
                           {item.soon && <span className="toc-soon-tag">未刊</span>}
                         </button>
                       ))}
@@ -257,7 +250,7 @@ export default function Catalog() {
         .title-quote { font-family: var(--font-serif); font-size: 0.92rem; color: var(--muted); line-height: 1.9; margin-bottom: 0.4rem; }
         .title-quote-en { font-family: var(--font-serif); font-size: 0.82rem; color: rgba(139,69,19,0.5); letter-spacing: 0.15em; }
 
-        /* ===== 右页：目录正文（flex 竖排，从右往左，可点击） ===== */
+        /* ===== 右页：目录正文（writing-mode 竖排 + flex column，可点击） ===== */
         .catalog-right { display: flex; flex-direction: column; }
         .catalog-header-mark {
           font-family: var(--font-serif); font-size: 1rem; color: var(--accent2);
@@ -265,58 +258,45 @@ export default function Catalog() {
           border-bottom: 1px solid rgba(139,69,19,0.2); margin-bottom: 1rem;
           position: relative; z-index: 5;
         }
-        /* 容器：flex 从右往左排列各卷 */
+        /* 容器：writing-mode 竖排 + flex column 布局 */
         .catalog-vertical {
-          flex: 1; overflow-x: auto; overflow-y: hidden; position: relative; z-index: 6;
-          display: flex; flex-direction: row-reverse; align-items: flex-start;
-          gap: 1.4rem; padding: 0.5rem;
+          flex: 1; position: relative; z-index: 6;
+          writing-mode: vertical-rl;
+          display: flex;
+          flex-direction: column;
+          gap: 0.8rem;
+          padding: 0.5rem;
+          overflow: auto;
           font-family: var(--font-serif);
           scrollbar-width: thin;
+          -webkit-overflow-scrolling: touch;
         }
-        .toc-juan { display: flex; flex-direction: column; gap: 0.6rem; flex-shrink: 0; }
-        /* 卷标题：竖排（单字 flex column） */
+        .toc-juan { display: block; }
         .toc-juan-title {
-          display: flex; flex-direction: column; align-items: center;
-          font-size: 1.05rem; font-weight: 700; color: var(--accent2);
-          letter-spacing: 0.1em; padding: 0.3rem 0.2rem;
+          display: block; font-size: 1.1rem; font-weight: 700; color: var(--accent2);
+          letter-spacing: 0.3em; margin-bottom: 0.8rem; padding: 0.2rem 0;
           border-bottom: 2px solid rgba(199,91,42,0.3);
         }
-        .toc-juan-title span { line-height: 1.4; }
-        .toc-chapter { display: flex; flex-direction: column; gap: 0.35rem; align-items: center; }
-        /* 章节名：竖排 */
+        .toc-chapter { display: block; margin-bottom: 0.5rem; }
         .toc-ch-name {
-          display: flex; flex-direction: column; align-items: center;
-          font-size: 0.98rem; font-weight: 600; color: var(--ink);
-          letter-spacing: 0.1em; padding: 0.2rem 0;
+          display: block; font-size: 1rem; font-weight: 600; color: var(--ink);
+          letter-spacing: 0.2em; margin-bottom: 0.5rem;
         }
-        .toc-ch-name span { line-height: 1.4; }
-        /* 条目：竖排可点击 button */
+        /* 条目：block 级别，保证可点击 */
         .toc-item {
-          display: flex; flex-direction: column; align-items: center;
-          padding: 0.4rem 0.5rem; margin: 0;
+          display: block;
+          padding: 0.4rem 0.6rem; margin: 0 0 0.4rem 0;
           cursor: pointer; border-radius: 4px; transition: background 0.2s;
-          position: relative;
           font-family: var(--font-serif); font-size: 0.95rem;
           background: transparent; border: none; color: var(--ink);
           -webkit-appearance: none; appearance: none;
+          text-align: start;
         }
         .toc-item:hover { background: rgba(232,200,140,0.5); }
         .toc-item:disabled, .toc-item.soon { cursor: not-allowed; opacity: 0.5; }
-        .toc-item-name {
-          display: flex; flex-direction: column; align-items: center;
-          color: var(--ink); letter-spacing: 0.1em;
-        }
-        .toc-item-name span { line-height: 1.4; }
-        .toc-item-page {
-          display: flex; flex-direction: column; align-items: center;
-          color: var(--muted); font-size: 0.82rem; margin-top: 0.3rem;
-          border-top: 1px dotted rgba(139,69,19,0.3); padding-top: 0.2rem;
-        }
-        .toc-item-page span { line-height: 1.3; }
         .toc-soon-tag {
-          font-size: 0.6rem; color: #E65100; background: #FFF3E0;
-          padding: 0.1rem 0.3rem; border-radius: 3px; margin-top: 0.2rem;
-          white-space: nowrap;
+          font-size: 0.62rem; color: #E65100; background: #FFF3E0;
+          padding: 0.1rem 0.4rem; border-radius: 3px; margin-left: 0.4rem;
         }
 
         .page-footer-mark { position: absolute; bottom: 0.8rem; font-size: 0.72rem; color: var(--muted); z-index: 5; }
