@@ -15,12 +15,12 @@ export default function TranslationOverlay({ mobile }) {
       </div>
       <style>{`
         .translation-overlay {
-          position: absolute; left: 50%; bottom: 1.5rem; transform: translateX(-50%);
-          z-index: 17; max-width: 420px; width: 90%;
+          position: absolute; left: 1.5rem; bottom: 1.5rem;
+          z-index: 17; max-width: 340px; width: 42%;
           animation: fadeInUp 0.25s ease; pointer-events: none;
         }
         .translation-overlay.mobile {
-          position: fixed; bottom: 4rem;
+          position: fixed; bottom: 4rem; left: 1rem; right: 1rem; width: auto; max-width: none;
         }
         .translation-card {
           background: rgba(255,252,245,0.95); backdrop-filter: blur(12px);

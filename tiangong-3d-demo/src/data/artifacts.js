@@ -125,6 +125,7 @@ export const artifacts = {
     status: 'online',
     subtitle: '人力踩踏，链板提水',
     color: '#6B3410',
+    fitScale: 0.6,  // 龙骨水车较长，缩小适配视野
     summary: '龙骨水车是一种依靠人力踩踏驱动链板刮水上升的灌溉工具，因链条形似龙骨而得名，是古代最普及的提水机械。',
     modernCounterpart: '刮板输送机 / 链斗式提升机',
     textSegments: [

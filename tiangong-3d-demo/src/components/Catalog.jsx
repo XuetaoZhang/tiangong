@@ -1,225 +1,361 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useStore } from '../store/useStore.js'
 import { artifacts, upcomingArtifacts } from '../data/artifacts.js'
 
-const categories = [
-  { id: 'all', name: '全部' },
-  { id: '乃粒·农具', name: '乃粒·农具' },
-  { id: '乃服·纺织', name: '乃服·纺织' },
-  { id: '治铸·铸造', name: '治铸·铸造' },
-  { id: '杀青·造纸', name: '杀青·造纸' },
+// 古籍目录数据：按篇章分组，仿《天工开物》原书目录样式
+const tocData = [
+  {
+    juan: '卷之上',
+    chapters: [
+      {
+        name: '乃粒',
+        sub: '农具·水利',
+        items: [
+          { id: 'tongche', name: '筒车', page: '一' },
+          { id: 'longgu', name: '龙骨水车', page: '三' },
+          { id: 'shuidui', name: '水碓', page: '七', soon: true },
+        ],
+      },
+      {
+        name: '乃服',
+        sub: '纺织·织造',
+        items: [
+          { id: 'fangzhi', name: '纺织机', page: '九', soon: true },
+        ],
+      },
+    ],
+  },
+  {
+    juan: '卷之下',
+    chapters: [
+      {
+        name: '治铸',
+        sub: '铸造·冶铁',
+        items: [
+          { id: 'gufeng', name: '鼓风炉', page: '十三', soon: true },
+        ],
+      },
+      {
+        name: '杀青',
+        sub: '造纸·印刷',
+        items: [
+          { id: 'huozi', name: '活字印刷', page: '十五', soon: true },
+        ],
+      },
+    ],
+  },
 ]
 
 export default function Catalog() {
   const go = useStore((s) => s.go)
   const openArtifact = useStore((s) => s.openArtifact)
-  const [activeCat, setActiveCat] = useState('all')
-  const [query, setQuery] = useState('')
+  const [entered, setEntered] = useState(false)
+  const [flipping, setFlipping] = useState(false)
+  const [flipDir, setFlipDir] = useState(0) // 1=翻开进入正文, -1=返回封面
+  const flipTimer = useRef(null)
 
-  const allItems = [
-    ...Object.values(artifacts),
-    ...upcomingArtifacts,
-  ]
+  useEffect(() => {
+    const t = setTimeout(() => setEntered(true), 100)
+    return () => clearTimeout(t)
+  }, [])
 
-  const filtered = allItems.filter((a) => {
-    const catOk = activeCat === 'all' || a.chapter === activeCat
-    const qOk = !query || a.name.includes(query) || a.chapter.includes(query)
-    return catOk && qOk
-  })
+  // 点击目录条目 → 多翻几页动画 → 进入正文
+  const handleSelect = (item) => {
+    if (item.soon) return
+    if (flipping) return
+    setFlipDir(1)
+    setFlipping(true)
+    flipTimer.current = setTimeout(() => {
+      openArtifact(item.id)
+    }, 1100)
+  }
+
+  const handleBack = () => {
+    if (flipping) return
+    setFlipDir(-1)
+    setFlipping(true)
+    flipTimer.current = setTimeout(() => {
+      go('cover')
+    }, 900)
+  }
 
   return (
     <div className="catalog-page">
-      {/* 顶部导航 */}
-      <nav className="top-nav catalog-nav">
-        <div className="logo" onClick={() => go('cover')}>
-          <span className="logo-seal">天</span>
-          <span className="logo-text">天工开物·3D 书</span>
-        </div>
-        <div className="nav-links">
-          <button onClick={() => go('cover')}>首页</button>
-          <button onClick={() => go('about')}>关于</button>
-          <button onClick={() => go('settings')}>设置</button>
-        </div>
-      </nav>
+      {/* 书本舞台 —— 与正文一致的翻开书本 */}
+      <div className="catalog-desktop">
+        <div className={`catalog-stage ${entered ? 'entered' : ''} ${flipping ? (flipDir > 0 ? 'flipping-fwd' : 'flipping-back') : ''}`}>
+          <div className="book-shadow" />
 
-      <div className="catalog-body">
-        <div className="catalog-header fade-in-up">
-          <button className="back-btn" onClick={() => go('cover')}>← 返回</button>
-          <h1 className="catalog-title">目 录</h1>
-          <div className="catalog-search">
-            <span className="search-icon">🔍</span>
-            <input
-              type="text"
-              placeholder="搜索器物名称或篇章…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* 分类 Tab */}
-        <div className="catalog-tabs">
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              className={`cat-tab ${activeCat === c.id ? 'active' : ''}`}
-              onClick={() => setActiveCat(c.id)}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-
-        {/* 器物卡片网格 */}
-        <div className="catalog-grid">
-          {filtered.map((item, idx) => (
-            <ArtifactCard
-              key={item.id}
-              item={item}
-              index={idx}
-              onClick={() => item.status === 'online' && openArtifact(item.id)}
-            />
-          ))}
-          {filtered.length === 0 && (
-            <div className="empty-state">
-              <p>未找到相关器物</p>
-              <button className="btn btn-outline" onClick={() => { setQuery(''); setActiveCat('all') }}>
-                查看全部
-              </button>
+          {/* 左页：书名页 / 序言 */}
+          <div className="book-page book-left">
+            <div className="page-texture-overlay" />
+            <div className="page-edge-curl left" />
+            <div className="catalog-titlepage">
+              <div className="title-seal">天</div>
+              <h1 className="title-main">天工開物</h1>
+              <p className="title-sub">宋應星 著</p>
+              <div className="title-rule" />
+              <p className="title-quote">「天覆地載，物數號萬，而事亦因之。」</p>
+              <p className="title-quote-en">物成於天，工存於人</p>
             </div>
-          )}
+            <div className="binding-holes binding-right" />
+          </div>
+
+          {/* 书脊 */}
+          <div className="book-spine">
+            <div className="spine-shadow-left" />
+            <div className="spine-shadow-right" />
+          </div>
+
+          {/* 右页：目录正文（flex 竖排，从右往左，可点击） */}
+          <div className="book-page book-right catalog-right">
+            <div className="page-texture-overlay" />
+            <div className="page-edge-curl right" />
+            <div className="catalog-header-mark">目　錄</div>
+            <div className="catalog-vertical">
+              {tocData.map((juan) => (
+                <div className="toc-juan" key={juan.juan}>
+                  <div className="toc-juan-title">{juan.juan.split('').map((c,i)=><span key={i}>{c}</span>)}</div>
+                  {juan.chapters.map((ch) => (
+                    <div className="toc-chapter" key={ch.name}>
+                      <div className="toc-ch-name">
+                        {ch.name.split('').map((c,i)=><span key={i}>{c}</span>)}
+                      </div>
+                      {ch.items.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className={`toc-item ${item.soon ? 'soon' : ''}`}
+                          onClick={() => handleSelect(item)}
+                          disabled={item.soon}
+                        >
+                          <span className="toc-item-name">
+                            {item.name.split('').map((c,i)=><span key={i}>{c}</span>)}
+                          </span>
+                          <span className="toc-item-page">
+                            {item.page.split('').map((c,i)=><span key={i}>{c}</span>)}
+                          </span>
+                          {item.soon && <span className="toc-soon-tag">未刊</span>}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="page-footer-mark right">
+              <span>點擊篇目 · 翻閱正文</span>
+            </div>
+          </div>
+
+          {/* 翻页动画层（多翻几页） */}
+          {flipping && <div className="catalog-flip-layer" />}
         </div>
+
+        {/* 返回按钮 */}
+        <button className="catalog-back-btn" onClick={handleBack} disabled={flipping}>← 返回封面</button>
       </div>
 
       <style>{`
         .catalog-page {
-          position: fixed; inset: 0; overflow-y: auto;
-          background: var(--bg);
+          position: fixed; inset: 0; overflow: hidden;
+          background: radial-gradient(ellipse at 50% 40%, #2A1810 0%, #1A0F08 100%);
         }
-        .catalog-nav { background: var(--bg2); border-bottom: 1px solid var(--rule); }
-        .catalog-nav .logo-text { color: var(--ink); }
-        .catalog-nav .nav-links button { color: var(--muted); }
-        .catalog-nav .nav-links button:hover { color: var(--accent); background: var(--accent-light); }
+        .catalog-nav { background: rgba(42,24,16,0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(232,200,140,0.15); position: relative; z-index: 50; }
+        .catalog-nav .logo-text { color: #E8C88C; }
+        .catalog-nav .nav-links button { color: rgba(232,200,140,0.7); }
+        .catalog-nav .nav-links button:hover { color: #E8C88C; background: rgba(232,200,140,0.1); }
 
-        .catalog-body { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
-        .catalog-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-        .back-btn {
-          color: var(--accent); font-size: 0.9rem; padding: 0.4rem 0.8rem;
-          border-radius: 6px; transition: all 0.2s;
+        /* ===== 书本舞台（与正文一致） ===== */
+        .catalog-desktop {
+          flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+          height: 100%; padding: 0 1rem;
+          perspective: 1400px; perspective-origin: 50% 30%;
         }
-        .back-btn:hover { background: var(--accent-light); }
-        .catalog-title {
-          font-family: var(--font-serif); font-size: 2rem; font-weight: 700;
-          color: var(--ink); letter-spacing: 0.3em; flex: 1;
+        .catalog-stage {
+          position: relative; display: flex;
+          width: min(92vw, 1080px); height: min(78vh, 660px);
+          transform: rotateX(20deg) rotateY(-6deg) scale(0.9);
+          transform-style: preserve-3d;
+          opacity: 0; transition: all 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .catalog-search {
-          display: flex; align-items: center; gap: 0.5rem;
-          background: var(--bg2); border: 1px solid var(--rule);
-          border-radius: 100px; padding: 0.4rem 1rem; min-width: 240px;
-        }
-        .search-icon { font-size: 0.85rem; opacity: 0.6; }
-        .catalog-search input {
-          border: none; outline: none; background: transparent;
-          font-size: 0.88rem; color: var(--ink); flex: 1;
-        }
+        .catalog-stage.entered { transform: rotateX(20deg) rotateY(-6deg) scale(1); opacity: 1; }
+        .catalog-stage.flipping-fwd { animation: catalogFlipFwd 1.1s cubic-bezier(0.5, 0, 0.5, 1) forwards; }
+        .catalog-stage.flipping-back { animation: catalogFlipBack 0.9s cubic-bezier(0.5, 0, 0.5, 1) forwards; }
 
-        .catalog-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
-        .cat-tab {
-          padding: 0.45rem 1rem; font-size: 0.85rem; border-radius: 100px;
-          color: var(--muted); border: 1px solid var(--rule); transition: all 0.2s;
-          font-family: var(--font-serif);
+        @keyframes catalogFlipFwd {
+          0% { transform: rotateX(20deg) rotateY(-6deg) scale(1); }
+          30% { transform: rotateX(8deg) rotateY(-3deg) scale(0.96); }
+          100% { transform: rotateX(20deg) rotateY(-6deg) scale(0.9); opacity: 0; }
         }
-        .cat-tab:hover { color: var(--accent); border-color: var(--accent); }
-        .cat-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-        .catalog-grid {
-          display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-          gap: 1.25rem;
+        @keyframes catalogFlipBack {
+          0% { transform: rotateX(20deg) rotateY(-6deg) scale(1); }
+          100% { transform: rotateX(20deg) rotateY(-6deg) scale(0.85); opacity: 0; }
         }
 
-        .artifact-card {
-          background: var(--bg2); border: 1px solid var(--rule);
-          border-radius: 14px; overflow: hidden; cursor: pointer;
-          transition: all 0.3s; position: relative;
-          animation: fadeInUp 0.5s ease backwards;
+        .book-shadow {
+          position: absolute; bottom: -28px; left: 4%; right: 4%; height: 40px;
+          background: radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, transparent 70%);
+          filter: blur(12px); z-index: 0;
         }
-        .artifact-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 32px rgba(139,69,19,0.15);
-          border-color: var(--accent);
-        }
-        .artifact-card.soon { cursor: default; opacity: 0.7; }
-        .artifact-card.soon:hover { transform: none; box-shadow: none; border-color: var(--rule); }
 
-        .card-thumb {
-          height: 160px; position: relative; overflow: hidden;
-          background: linear-gradient(135deg, #F4ECD8, #E8DCC0);
+        .book-page {
+          flex: 1; position: relative; padding: 2rem 2.2rem; overflow: hidden;
+          background: linear-gradient(135deg, #F4ECD8 0%, #EDE3CC 50%, #E8DCC0 100%);
+          box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+        }
+        .catalog-stage .book-left {
+          border-radius: 6px 0 0 6px;
+          box-shadow: inset -10px 0 18px -10px rgba(58,37,24,0.45), inset 0 0 60px rgba(139,69,19,0.06), 0 12px 48px rgba(0,0,0,0.4);
           display: flex; align-items: center; justify-content: center;
         }
-        .card-thumb-icon {
-          font-family: var(--font-serif); font-size: 3.5rem; font-weight: 700;
-          color: var(--accent); opacity: 0.5;
+        .catalog-stage .book-right {
+          border-radius: 0 6px 6px 0;
+          box-shadow: inset 10px 0 18px -10px rgba(58,37,24,0.45), inset 0 0 60px rgba(139,69,19,0.06), 0 12px 48px rgba(0,0,0,0.4);
         }
-        .card-thumb-deco {
-          position: absolute; inset: 0;
+        .page-texture-overlay {
+          position: absolute; inset: 0; pointer-events: none; z-index: 1;
+          background-image:
+            radial-gradient(circle at 15% 25%, rgba(139,69,19,0.05) 0%, transparent 45%),
+            radial-gradient(circle at 85% 75%, rgba(139,69,19,0.04) 0%, transparent 45%),
+            repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(139,69,19,0.015) 3px, rgba(139,69,19,0.015) 4px);
+          mix-blend-mode: multiply;
+        }
+        .page-edge-curl { position: absolute; pointer-events: none; z-index: 2; width: 24px; height: 100%; top: 0; }
+        .page-edge-curl.left { left: 0; background: linear-gradient(90deg, rgba(58,37,24,0.18) 0%, transparent 100%); }
+        .page-edge-curl.right { right: 0; background: linear-gradient(270deg, rgba(58,37,24,0.18) 0%, transparent 100%); }
+        .book-spine {
+          width: 22px; align-self: stretch; position: relative; z-index: 3;
+          background: linear-gradient(90deg, rgba(0,0,0,0.05) 0%, rgba(58,37,24,0.35) 30%, rgba(42,24,16,0.55) 50%, rgba(58,37,24,0.35) 70%, rgba(0,0,0,0.05) 100%);
+        }
+        .spine-shadow-left { position: absolute; left: -8px; top: 0; bottom: 0; width: 12px; background: linear-gradient(270deg, rgba(0,0,0,0.25), transparent); }
+        .spine-shadow-right { position: absolute; right: -8px; top: 0; bottom: 0; width: 12px; background: linear-gradient(90deg, rgba(0,0,0,0.25), transparent); }
+        .binding-holes {
+          position: absolute; right: 0.5rem; top: 0; bottom: 0; width: 8px; z-index: 4;
           background:
-            radial-gradient(circle at 50% 50%, rgba(139,69,19,0.08) 0%, transparent 60%),
-            repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(139,69,19,0.03) 20px, rgba(139,69,19,0.03) 21px);
-        }
-        .card-badge {
-          position: absolute; top: 0.8rem; right: 0.8rem;
-          font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 100px;
-          font-weight: 600;
-        }
-        .card-badge.online { background: #E8F5E9; color: #2E7D32; }
-        .card-badge.soon { background: #FFF3E0; color: #E65100; }
-
-        .card-info { padding: 1rem 1.2rem 1.2rem; }
-        .card-name {
-          font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700;
-          color: var(--ink); margin-bottom: 0.3rem; letter-spacing: 0.05em;
-        }
-        .card-chapter { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.6rem; }
-        .card-stars { font-size: 0.8rem; color: var(--gold); letter-spacing: 0.1em; }
-
-        .empty-state {
-          grid-column: 1 / -1; text-align: center; padding: 4rem 2rem;
-          color: var(--muted);
+            radial-gradient(circle at 4px 18%, rgba(42,24,16,0.5) 2px, transparent 3px),
+            radial-gradient(circle at 4px 50%, rgba(42,24,16,0.5) 2px, transparent 3px),
+            radial-gradient(circle at 4px 82%, rgba(42,24,16,0.5) 2px, transparent 3px);
         }
 
-        @media (max-width: 640px) {
-          .catalog-title { font-size: 1.5rem; }
-          .catalog-search { min-width: 100%; }
-          .catalog-grid { grid-template-columns: 1fr 1fr; gap: 0.8rem; }
-          .card-thumb { height: 110px; }
-          .card-thumb-icon { font-size: 2.5rem; }
-          .card-name { font-size: 1rem; }
+        /* ===== 左页：书名页 ===== */
+        .catalog-titlepage { text-align: center; position: relative; z-index: 5; }
+        .title-seal {
+          width: 56px; height: 56px; margin: 0 auto 1.2rem;
+          background: var(--accent2); color: #fff;
+          font-family: var(--font-serif); font-size: 2rem; font-weight: 700;
+          display: flex; align-items: center; justify-content: center;
+          border-radius: 8px; box-shadow: 0 4px 12px rgba(199,91,42,0.4);
+        }
+        .title-main {
+          font-family: var(--font-serif); font-size: 3rem; font-weight: 700;
+          color: var(--ink); letter-spacing: 0.3em; margin-bottom: 0.6rem;
+          writing-mode: vertical-rl; margin: 0 auto 1rem; line-height: 1.4;
+        }
+        .title-sub { font-family: var(--font-serif); font-size: 0.95rem; color: var(--muted); letter-spacing: 0.2em; margin-bottom: 1.5rem; }
+        .title-rule { width: 60px; height: 1px; background: var(--accent2); margin: 0 auto 1.5rem; opacity: 0.6; }
+        .title-quote { font-family: var(--font-serif); font-size: 0.92rem; color: var(--muted); line-height: 1.9; margin-bottom: 0.4rem; }
+        .title-quote-en { font-family: var(--font-serif); font-size: 0.82rem; color: rgba(139,69,19,0.5); letter-spacing: 0.15em; }
+
+        /* ===== 右页：目录正文（flex 竖排，从右往左，可点击） ===== */
+        .catalog-right { display: flex; flex-direction: column; }
+        .catalog-header-mark {
+          font-family: var(--font-serif); font-size: 1rem; color: var(--accent2);
+          letter-spacing: 0.4em; text-align: center; padding-bottom: 0.8rem;
+          border-bottom: 1px solid rgba(139,69,19,0.2); margin-bottom: 1rem;
+          position: relative; z-index: 5;
+        }
+        /* 容器：flex 从右往左排列各卷 */
+        .catalog-vertical {
+          flex: 1; overflow-x: auto; overflow-y: hidden; position: relative; z-index: 6;
+          display: flex; flex-direction: row-reverse; align-items: flex-start;
+          gap: 1.4rem; padding: 0.5rem;
+          font-family: var(--font-serif);
+          scrollbar-width: thin;
+        }
+        .toc-juan { display: flex; flex-direction: column; gap: 0.6rem; flex-shrink: 0; }
+        /* 卷标题：竖排（单字 flex column） */
+        .toc-juan-title {
+          display: flex; flex-direction: column; align-items: center;
+          font-size: 1.05rem; font-weight: 700; color: var(--accent2);
+          letter-spacing: 0.1em; padding: 0.3rem 0.2rem;
+          border-bottom: 2px solid rgba(199,91,42,0.3);
+        }
+        .toc-juan-title span { line-height: 1.4; }
+        .toc-chapter { display: flex; flex-direction: column; gap: 0.35rem; align-items: center; }
+        /* 章节名：竖排 */
+        .toc-ch-name {
+          display: flex; flex-direction: column; align-items: center;
+          font-size: 0.98rem; font-weight: 600; color: var(--ink);
+          letter-spacing: 0.1em; padding: 0.2rem 0;
+        }
+        .toc-ch-name span { line-height: 1.4; }
+        /* 条目：竖排可点击 button */
+        .toc-item {
+          display: flex; flex-direction: column; align-items: center;
+          padding: 0.4rem 0.5rem; margin: 0;
+          cursor: pointer; border-radius: 4px; transition: background 0.2s;
+          position: relative;
+          font-family: var(--font-serif); font-size: 0.95rem;
+          background: transparent; border: none; color: var(--ink);
+          -webkit-appearance: none; appearance: none;
+        }
+        .toc-item:hover { background: rgba(232,200,140,0.5); }
+        .toc-item:disabled, .toc-item.soon { cursor: not-allowed; opacity: 0.5; }
+        .toc-item-name {
+          display: flex; flex-direction: column; align-items: center;
+          color: var(--ink); letter-spacing: 0.1em;
+        }
+        .toc-item-name span { line-height: 1.4; }
+        .toc-item-page {
+          display: flex; flex-direction: column; align-items: center;
+          color: var(--muted); font-size: 0.82rem; margin-top: 0.3rem;
+          border-top: 1px dotted rgba(139,69,19,0.3); padding-top: 0.2rem;
+        }
+        .toc-item-page span { line-height: 1.3; }
+        .toc-soon-tag {
+          font-size: 0.6rem; color: #E65100; background: #FFF3E0;
+          padding: 0.1rem 0.3rem; border-radius: 3px; margin-top: 0.2rem;
+          white-space: nowrap;
+        }
+
+        .page-footer-mark { position: absolute; bottom: 0.8rem; font-size: 0.72rem; color: var(--muted); z-index: 5; }
+        .page-footer-mark.right { left: auto; right: 2.2rem; }
+
+        /* ===== 翻页动画层（多翻几页效果） ===== */
+        .catalog-flip-layer {
+          position: absolute; top: 0; right: 0; width: 50%; height: 100%;
+          background: linear-gradient(135deg, #F4ECD8, #E8DCC0);
+          transform-origin: left center; z-index: 30; pointer-events: none;
+          box-shadow: -8px 0 24px rgba(0,0,0,0.25);
+          animation: catalogMultiFlip 1.1s cubic-bezier(0.4, 0, 0.3, 1);
+        }
+        @keyframes catalogMultiFlip {
+          0% { transform: rotateY(0deg); opacity: 1; }
+          25% { transform: rotateY(-90deg); opacity: 0.9; }
+          26% { transform: rotateY(-180deg); opacity: 0.7; }
+          50% { transform: rotateY(-270deg); opacity: 0.9; }
+          51% { transform: rotateY(-360deg); opacity: 1; }
+          75% { transform: rotateY(-450deg); opacity: 0.85; }
+          100% { transform: rotateY(-540deg); opacity: 0; }
+        }
+
+        .catalog-back-btn {
+          position: absolute; top: 1rem; left: 1.5rem; z-index: 60;
+          color: #E8C88C; font-size: 0.9rem; padding: 0.5rem 1rem;
+          border-radius: 6px; background: rgba(42,24,16,0.6); backdrop-filter: blur(8px);
+          border: 1px solid rgba(232,200,140,0.2); transition: all 0.2s;
+        }
+        .catalog-back-btn:hover { background: rgba(199,91,42,0.3); }
+        .catalog-back-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        @media (max-width: 768px) {
+          .catalog-stage { width: 96vw; height: 70vh; }
+          .book-page { padding: 1.2rem; }
+          .title-main { font-size: 2rem; }
+          .catalog-vertical { font-size: 0.85rem; }
         }
       `}</style>
-    </div>
-  )
-}
-
-function ArtifactCard({ item, index, onClick }) {
-  const isOnline = item.status === 'online'
-  return (
-    <div
-      className={`artifact-card ${isOnline ? '' : 'soon'}`}
-      style={{ animationDelay: `${index * 0.06}s` }}
-      onClick={onClick}
-    >
-      <div className="card-thumb">
-        <div className="card-thumb-deco" />
-        <div className="card-thumb-icon">{item.name[0]}</div>
-        <span className={`card-badge ${item.status}`}>
-          {isOnline ? '已上线' : '敬请期待'}
-        </span>
-      </div>
-      <div className="card-info">
-        <div className="card-name">{item.name}</div>
-        <div className="card-chapter">{item.chapter}</div>
-        <div className="card-stars">{'★'.repeat(item.difficulty)}{'☆'.repeat(5 - item.difficulty)}</div>
-      </div>
     </div>
   )
 }

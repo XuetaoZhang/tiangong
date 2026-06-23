@@ -18,17 +18,28 @@ function CameraRig({ viewPreset }) {
   const { camera, controls } = useThree()
   const targetPos = useRef(new THREE.Vector3(...VIEW_PRESETS[viewPreset].position))
   const targetLook = useRef(new THREE.Vector3(...VIEW_PRESETS[viewPreset].target))
+  // 是否正在执行视角切换动画；切换完成后停止干预，让用户自由操控
+  const animating = useRef(true)  // 初始进入时执行一次归位动画
+  const settled = useRef(false)
 
   useEffect(() => {
     targetPos.current.set(...VIEW_PRESETS[viewPreset].position)
     targetLook.current.set(...VIEW_PRESETS[viewPreset].target)
+    animating.current = true
+    settled.current = false
   }, [viewPreset])
 
-  useFrame((state, delta) => {
-    camera.position.lerp(targetPos.current, 0.08)
+  useFrame(() => {
+    if (!animating.current) return
+    camera.position.lerp(targetPos.current, 0.1)
     if (controls) {
-      controls.target.lerp(targetLook.current, 0.08)
+      controls.target.lerp(targetLook.current, 0.1)
       controls.update()
+    }
+    // 接近目标即停止干预，交还控制权给用户
+    if (camera.position.distanceTo(targetPos.current) < 0.02) {
+      animating.current = false
+      settled.current = true
     }
   })
   return null
@@ -74,24 +85,26 @@ export default function Scene3D({ artifact }) {
       />
       <directionalLight position={[-3, 2, -2]} intensity={0.25} color="#E8C88C" />
 
-      {/* 浮空效果 —— 轻微上下呼吸 */}
+      {/* 浮空效果 —— 轻微上下呼吸；外层缩放适配视野，避免模型超出可视范围 */}
       <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.3} floatingRange={[-0.06, 0.06]}>
-        {artifact.id === 'tongche' && (
-          <Tongche
-            highlightedPartId={highlightedPartId}
-            explode={explode}
-            simSpeed={simSpeed}
-            onSelectPart={handleSelectPart}
-          />
-        )}
-        {artifact.id === 'longgu' && (
-          <Longgu
-            highlightedPartId={highlightedPartId}
-            explode={explode}
-            simSpeed={simSpeed}
-            onSelectPart={handleSelectPart}
-          />
-        )}
+        <group scale={artifact.fitScale || 0.85}>
+          {artifact.id === 'tongche' && (
+            <Tongche
+              highlightedPartId={highlightedPartId}
+              explode={explode}
+              simSpeed={simSpeed}
+              onSelectPart={handleSelectPart}
+            />
+          )}
+          {artifact.id === 'longgu' && (
+            <Longgu
+              highlightedPartId={highlightedPartId}
+              explode={explode}
+              simSpeed={simSpeed}
+              onSelectPart={handleSelectPart}
+            />
+          )}
+        </group>
       </Float>
 
       {/* 柔和接触阴影 —— 悬浮感的灵魂：随器物形状的深棕软影投在书页上 */}
@@ -130,8 +143,8 @@ export default function Scene3D({ artifact }) {
         enablePan={true}
         enableZoom={true}
         enableRotate={true}
-        minDistance={3}
-        maxDistance={9}
+        minDistance={2}
+        maxDistance={14}
         makeDefault
       />
     </Canvas>

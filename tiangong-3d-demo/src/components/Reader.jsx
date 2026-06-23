@@ -378,7 +378,7 @@ function ReaderStyles() {
       /* ===== 3D 器物悬浮层（独立于书本，正立悬浮在书本上空） ===== */
       .floating-3d-layer {
         position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-        width: 50%; height: 100%; z-index: 20; pointer-events: auto;
+        width: 58%; height: 104%; z-index: 20; pointer-events: auto;
       }
       .floating-3d-layer canvas { width: 100% !important; height: 100% !important; }
       /* 浮空光晕 —— 器物下方的"投影光"（极轻微暖调衬托，不抢接触阴影的戏） */
