@@ -24,10 +24,14 @@ export const useStore = create((set, get) => ({
 
   // ===== 翻书 =====
   pageTurning: false,
-  turnPage: (dir) => {
+  turnPage: (dir, nextArtifactId) => {
     if (get().pageTurning) return
     set({ pageTurning: true })
-    setTimeout(() => set({ pageTurning: false }), 800)
+    // 800ms 翻页动画后切换器物
+    setTimeout(() => {
+      set({ artifactId: nextArtifactId, selectedPartId: null, highlightedPartId: null })
+      setTimeout(() => set({ pageTurning: false }), 50)
+    }, 800)
   },
 
   // ===== 工具栏 =====

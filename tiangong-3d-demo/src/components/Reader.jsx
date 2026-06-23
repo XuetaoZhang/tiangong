@@ -20,7 +20,14 @@ export default function Reader() {
   useEffect(() => {
     const t = setTimeout(() => setEntered(true), 100)
     return () => clearTimeout(t)
-  }, [artifactId])
+  }, [])
+
+  const handleTurnPage = (dir) => {
+    const ids = Object.keys(artifacts).filter(k => artifacts[k].status === 'online')
+    const idx = ids.indexOf(artifactId)
+    const nextIdx = (idx + dir + ids.length) % ids.length
+    turnPage(dir, ids[nextIdx])
+  }
 
   if (!artifact) return null
 
@@ -56,8 +63,8 @@ export default function Reader() {
             <div className="page-footer-mark">
               <span className="bookmark">🔖 {artifact.name}</span>
             </div>
-            {/* 线装痕迹 */}
-            <div className="binding-holes" />
+            {/* 线装痕迹 —— 中式古籍装订在右侧 */}
+            <div className="binding-holes binding-right" />
           </div>
 
           {/* 书脊 */}
@@ -78,7 +85,7 @@ export default function Reader() {
               <span className="page-illus-mark">〔 {artifact.name}图 〕</span>
             </div>
             {/* 3D 浮空投影区 */}
-            <div className="scene-container">
+            <div className="scene-container" key={artifact.id}>
               <div className="scene-glow" />
               <Scene3D artifact={artifact} />
               <div className="scene-hint">拖拽旋转 · 滚轮缩放 · 点击热点 ●</div>
@@ -93,8 +100,8 @@ export default function Reader() {
         </div>
 
         {/* 翻页按钮 */}
-        <button className="page-nav page-prev" onClick={() => turnPage(-1)}>‹</button>
-        <button className="page-nav page-next" onClick={() => turnPage(1)}>›</button>
+        <button className="page-nav page-prev" onClick={() => handleTurnPage(-1)} disabled={pageTurning}>‹</button>
+        <button className="page-nav page-next" onClick={() => handleTurnPage(1)} disabled={pageTurning}>›</button>
 
         {/* 工具栏 */}
         <Toolbar artifact={artifact} />
@@ -339,9 +346,12 @@ function ReaderStyles() {
       .page-footer-mark.right { left: auto; right: 1.9rem; }
       .bookmark { color: var(--accent2); }
 
-      /* 线装痕迹 */
+      /* 线装痕迹 —— 中式古籍装订在右侧 */
       .binding-holes {
-        position: absolute; left: 0.5rem; top: 0; bottom: 0; width: 8px; z-index: 4;
+        position: absolute; top: 0; bottom: 0; width: 8px; z-index: 4;
+      }
+      .binding-holes.binding-right {
+        right: 0.5rem;
         background:
           radial-gradient(circle at 4px 18%, rgba(42,24,16,0.5) 2px, transparent 3px),
           radial-gradient(circle at 4px 50%, rgba(42,24,16,0.5) 2px, transparent 3px),
@@ -424,19 +434,21 @@ function ReaderStyles() {
         transition: all 0.2s; z-index: 15;
       }
       .page-nav:hover { background: rgba(232,200,140,0.25); transform: translateY(-50%) scale(1.1); }
+      .page-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+      .page-nav:disabled:hover { transform: translateY(-50%) scale(1); background: rgba(232,200,140,0.15); }
       .page-prev { left: 1rem; }
       .page-next { right: 1rem; }
 
-      /* 翻页动画层 */
+      /* 翻页动画层 —— 右页翻到左边（中式古籍翻页方向） */
       .page-flip {
         position: absolute; top: 0; right: 0; width: 50%; height: 100%;
         background: linear-gradient(135deg, #F4ECD8, #E8DCC0);
         transform-origin: left center;
-        animation: pageFlip 0.8s ease; z-index: 10;
+        animation: pageFlipRight 0.8s ease; z-index: 10;
         box-shadow: -8px 0 20px rgba(0,0,0,0.2);
         pointer-events: none;
       }
-      @keyframes pageFlip {
+      @keyframes pageFlipRight {
         0% { transform: rotateY(0deg); opacity: 1; }
         100% { transform: rotateY(-180deg); opacity: 0; }
       }

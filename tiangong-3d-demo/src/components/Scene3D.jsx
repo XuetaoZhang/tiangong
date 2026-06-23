@@ -24,7 +24,7 @@ function CameraRig({ viewPreset }) {
     targetLook.current.set(...VIEW_PRESETS[viewPreset].target)
   }, [viewPreset])
 
-  useFrame(() => {
+  useFrame((state, delta) => {
     camera.position.lerp(targetPos.current, 0.08)
     if (controls) {
       controls.target.lerp(targetLook.current, 0.08)
@@ -57,7 +57,8 @@ export default function Scene3D({ artifact }) {
       shadows
       camera={{ position: [0, 0.5, 5.5], fov: 45 }}
       dpr={quality === 'high' ? [1, 2] : quality === 'medium' ? [1, 1.5] : 1}
-      gl={{ antialias: quality !== 'low', alpha: true }}
+      gl={{ antialias: quality !== 'low', alpha: true, preserveDrawingBuffer: false }}
+      frameloop="always"
     >
       <CameraRig viewPreset={viewPreset} />
 
