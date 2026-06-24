@@ -94,6 +94,10 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
   const S45 = Math.sin(Math.PI / 4)
 
   const C90 = Math.cos(Math.PI / 2)
+  // 筒口朝轮子转动方向(CCW)倾斜40°
+  const TILT40 = Math.PI * 40 / 180
+  const S40 = Math.sin(TILT40)   // 切向(CCW前进)分量
+  const C40 = Math.cos(TILT40)   // Z轴(垂直轮面)分量
   const S90 = Math.sin(Math.PI / 2)
 
   return (
@@ -295,11 +299,14 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
           const baseZ = 0
           const tubeLen = 0.62
           const tubeR = 0.055
-          // 筒方向：径向(朝外)×cos45 + Z轴(朝观众)×sin45
-          // 筒身垂直于轮面（有Z分量），与径向呈45°
-          const dirX = Math.cos(t.angle) * C90
-          const dirY = Math.sin(t.angle) * C90
-          const dirZ = S45
+          // 筒方向：径向×C90(=0,垂直轮面不沿径向) + 切向(CCW前进)×S40(朝转动方向倾斜40°) + Z轴×C40(垂直轮面分量)
+          // CCW前进切向 = (-sin(angle), cos(angle))
+          // 筒口朝轮子转动方向倾斜40°
+          const tanX = -Math.sin(t.angle)
+          const tanY = Math.cos(t.angle)
+          const dirX = Math.cos(t.angle) * C90 + tanX * S40
+          const dirY = Math.sin(t.angle) * C90 + tanY * S40
+          const dirZ = C40
           // 用quaternion旋转Y轴(cylinder默认轴)到筒方向
           const dir = new THREE.Vector3(dirX, dirY, dirZ).normalize()
           const quatY = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir)
