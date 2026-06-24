@@ -291,12 +291,13 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
         {/* 筒身平放在轮圈外侧，固定在挡水推板上（轮子外围），不插入轮边缘 */}
         {/* 低位入水兜水、高位自然倒水，45°倾斜是实现取水功能的关键 */}
         {tubes.map((t, i) => {
-          // 挡水推板位置（竹筒固定基座，筒身居中在此）
-          const bladeHalfW = 0.09  // 挡水推板半宽
-          // 筒身居中在挡水推板上：筒中心 = 挡水推板中心位置
-          // 筒口突出轮子外侧一点，筒底在轮子内侧一点（左右对齐）
-          const centerX = Math.cos(t.angle) * (radius + 0.05)
-          const centerY = Math.sin(t.angle) * (radius + 0.05)
+          // 挡水推板位置（竹筒固定基座）
+          const bladeHalfW = 0.09  // 挡水推板半宽（径向）
+          // 筒身固定在挡水推板外侧（轮子外围），径向向外偏移，不与挡水推板重合
+          // 筒中心 = 挡水推板外侧位置（径向向外离开挡水推板表面）
+          const tubeOffset = bladeHalfW + 0.04  // 挡水推板半宽 + 间隙，让筒身离开挡水推板
+          const centerX = Math.cos(t.angle) * (radius + 0.05 + tubeOffset)
+          const centerY = Math.sin(t.angle) * (radius + 0.05 + tubeOffset)
           const centerZ = 0
           const tubeLen = 0.62
           const tubeR = 0.055
