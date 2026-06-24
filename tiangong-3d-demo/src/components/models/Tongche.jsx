@@ -474,26 +474,37 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
         <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[0, 0.12, -0.8]}>
           <boxGeometry args={[0.8, 0.24, 0.06]} />
         </mesh>
-        {/* 槽壁远（Z+侧，低端，出水处，较低） */}
-        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[0, 0.08, 0.8]}>
-          <boxGeometry args={[0.8, 0.16, 0.06]} />
-        </mesh>
-        {/* 导流尾槽（末端细长导流木槽，沿+Z向下引导水流至农田） */}
+        {/* 槽壁远（Z+侧，低端，出水处，较低，与导流尾槽联通，去掉挡水板让水流通） */}
+        {/* 导流尾槽（末端细长导流木槽，从主槽出水端开始，无缝联通，沿+Z向下引导水流至农田） */}
         <mesh
           material={woodMat('trough', '#6B4226')}
           castShadow
-          position={[0, -0.18, 1.3]}
+          position={[0, -0.15, 1.3]}
           rotation={[0.38, 0, 0]}
           onClick={(e) => { e.stopPropagation(); onSelectPart('trough') }}
         >
-          <boxGeometry args={[0.55, 0.08, 1.0]} />
+          <boxGeometry args={[0.7, 0.08, 1.0]} />
         </mesh>
-        {/* 导流尾槽侧壁 */}
-        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[0.28, -0.1, 1.3]} rotation={[0.38, 0, 0]}>
-          <boxGeometry args={[0.05, 0.12, 1.0]} />
+        {/* 导流尾槽内水道（与主槽水道联通） */}
+        <mesh position={[0, -0.11, 1.3]} rotation={[0.38, 0, 0]}>
+          <boxGeometry args={[0.6, 0.04, 0.9]} />
+          <meshStandardMaterial color="#2A1810" roughness={0.9} />
         </mesh>
-        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[-0.28, -0.1, 1.3]} rotation={[0.38, 0, 0]}>
-          <boxGeometry args={[0.05, 0.12, 1.0]} />
+        {/* 导流尾槽侧壁（左右，与主槽侧壁等高衔接） */}
+        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[0.35, -0.07, 1.3]} rotation={[0.38, 0, 0]}>
+          <boxGeometry args={[0.06, 0.14, 1.0]} />
+        </mesh>
+        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[-0.35, -0.07, 1.3]} rotation={[0.38, 0, 0]}>
+          <boxGeometry args={[0.06, 0.14, 1.0]} />
+        </mesh>
+        {/* 联通过渡段（主槽与尾槽接缝处，倾斜过渡，确保水流通畅） */}
+        <mesh
+          material={woodMat('trough', '#6B4226')}
+          castShadow
+          position={[0, -0.02, 0.95]}
+          rotation={[0.15, 0, 0]}
+        >
+          <boxGeometry args={[0.7, 0.08, 0.3]} />
         </mesh>
         {/* 水槽底部斜撑木（托举水槽，从立柱顶部连接到水槽） */}
         <mesh material={woodMat('trough', '#5C3A1E')} castShadow position={[0.25, -0.6, 0.4]} rotation={[1.1, 0, 0]}>
@@ -561,28 +572,34 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
         </group>
       ))}
 
-      {/* ===== 水面（轮子1/6淹没水中，水流推动轮子转动） ===== */}
-      {/* 水面高度：轮子半径1.7，1/6高度≈0.57，水面在 y=-1.13（轮底上方0.57） */}
-      <mesh position={[0, -1.13, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      {/* ===== 水体（水面以下全部做成水的样子，轮子底部0.8/6淹没水中） ===== */}
+      {/* 淹没深度：轮子半径1.7，0.8/6高度≈0.227，水面在 y=-1.7+0.227=-1.47 */}
+      {/* 水面 */}
+      <mesh position={[0, -1.47, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[8, 4.5]} />
         <meshStandardMaterial color="#4A7A9A" transparent opacity={0.45} roughness={0.3} />
       </mesh>
-      {/* 水面波纹（模拟水流流动方向，从+X流向-X，推动轮子CCW转动） */}
-      <mesh position={[0, -1.12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      {/* 水体（水面以下的实体水，半透明蓝色） */}
+      <mesh position={[0, -2.5, 0]}>
+        <boxGeometry args={[8, 2.0, 4.5]} />
+        <meshStandardMaterial color="#3A6A8A" transparent opacity={0.35} roughness={0.2} metalness={0.1} />
+      </mesh>
+      {/* 水面波纹（模拟水流流动方向） */}
+      <mesh position={[0, -1.46, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[radius * 0.5, radius * 0.95, 32]} />
         <meshStandardMaterial color="#5BA3D0" transparent opacity={0.3} roughness={0.3} />
       </mesh>
 
-      {/* 水流方向箭头（模拟时显示，从+X流向-X，推动轮子CCW转动） */}
+      {/* 水流方向箭头（模拟时显示，从-X流向+X，推动轮子CCW转动） */}
       {simSpeed > 0 && <WaterFlowArrows speed={simSpeed} />}
 
-      {/* 竹筒倒水粒子（模拟时显示，竹筒到最高点倒水入导水槽） */}
-      {simSpeed > 0 && <TubeWaterDrops wheelRef={wheelRef} speed={simSpeed} />}
+      {/* 竹筒倒水流动（模拟时显示，水从竹筒流入导水槽第一部件，再流到第二部件） */}
+      {simSpeed > 0 && <TubeWaterFlow wheelRef={wheelRef} speed={simSpeed} />}
     </group>
   )
 }
 
-// 水流方向箭头（水面上的流动箭头，从+X流向-X，推动轮子CCW转动）
+// 水流方向箭头（水面上的流动箭头，从-X流向+X，推动轮子CCW转动）
 function WaterFlowArrows({ speed }) {
   const ref = useRef()
   const count = 12
@@ -601,17 +618,18 @@ function WaterFlowArrows({ speed }) {
   useFrame((_, delta) => {
     if (!ref.current) return
     ref.current.children.forEach((child, i) => {
-      child.position.x -= delta * (speed / 50) * 1.2
-      if (child.position.x < -2.5) {
-        child.position.x = 2.5
+      // 水流从-X流向+X
+      child.position.x += delta * (speed / 50) * 1.2
+      if (child.position.x > 2.5) {
+        child.position.x = -2.5
       }
     })
   })
 
   return (
-    <group ref={ref} position={[0, -1.1, 0]}>
+    <group ref={ref} position={[0, -1.4, 0]}>
       {arrows.map((a, i) => (
-        <mesh key={i} position={[a.x, 0, a.z]} rotation={[-Math.PI / 2, 0, Math.PI / 2]}>
+        <mesh key={i} position={[a.x, 0, a.z]} rotation={[-Math.PI / 2, 0, -Math.PI / 2]}>
           <coneGeometry args={[0.08, 0.25, 4]} />
           <meshStandardMaterial color="#5BA3D0" transparent opacity={0.6} roughness={0.3} />
         </mesh>
@@ -620,52 +638,122 @@ function WaterFlowArrows({ speed }) {
   )
 }
 
-// 竹筒倒水粒子（竹筒到最高点倒水入导水槽）
-function TubeWaterDrops({ wheelRef, speed }) {
-  const ref = useRef()
-  const dropCount = 30
-  const drops = useRef([])
+// 竹筒倒水流动（水从竹筒流入导水槽第一部件，再流到第二部件，流动效果）
+function TubeWaterFlow({ wheelRef, speed }) {
+  const dropRef = useRef()
+  const flowRef1 = useRef()  // 主槽内水流
+  const flowRef2 = useRef()  // 导流尾槽内水流
 
-  // 初始化水滴（在导水槽上方，模拟竹筒倒水）
-  const positions = useMemo(() => {
+  // 阶段1：竹筒倒水水滴（从最高点竹筒流入导水槽主槽）
+  const dropCount = 20
+  const dropPositions = useMemo(() => {
     const arr = new Float32Array(dropCount * 3)
     for (let i = 0; i < dropCount; i++) {
-      // 水滴从最高点竹筒位置（y≈radius）下落到导水槽（y≈radius-0.3, z≈1.3）
-      arr[i * 3] = (Math.random() - 0.5) * 0.3
-      arr[i * 3 + 1] = 1.4 + Math.random() * 0.3
-      arr[i * 3 + 2] = 0.8 + Math.random() * 0.5
-      drops.current[i] = { active: true, life: Math.random() }
+      // 从竹筒最高点位置（y≈1.7, z≈0.2）流到导水槽主槽（y≈1.4, z≈1.3）
+      arr[i * 3] = (Math.random() - 0.5) * 0.15
+      arr[i * 3 + 1] = 1.5 + Math.random() * 0.2
+      arr[i * 3 + 2] = 0.3 + Math.random() * 0.3
+    }
+    return arr
+  }, [])
+  const dropLife = useRef(Array.from({ length: dropCount }, () => Math.random()))
+
+  // 阶段2：主槽内水流（沿+Z流动，从z=-0.8到z=0.8）
+  const flow1Count = 25
+  const flow1Positions = useMemo(() => {
+    const arr = new Float32Array(flow1Count * 3)
+    for (let i = 0; i < flow1Count; i++) {
+      arr[i * 3] = (Math.random() - 0.5) * 0.5
+      arr[i * 3 + 1] = 1.45
+      arr[i * 3 + 2] = -0.7 + Math.random() * 1.4
+    }
+    return arr
+  }, [])
+
+  // 阶段3：导流尾槽内水流（沿+Z向下流动）
+  const flow2Count = 20
+  const flow2Positions = useMemo(() => {
+    const arr = new Float32Array(flow2Count * 3)
+    for (let i = 0; i < flow2Count; i++) {
+      const t = Math.random()
+      // 尾槽从z=0.8到z=1.8，倾斜下降
+      arr[i * 3] = (Math.random() - 0.5) * 0.4
+      arr[i * 3 + 1] = 1.3 - t * 0.4
+      arr[i * 3 + 2] = 0.8 + t * 1.0
     }
     return arr
   }, [])
 
   useFrame((_, delta) => {
-    if (!ref.current) return
-    const pos = ref.current.geometry.attributes.position
-    for (let i = 0; i < dropCount; i++) {
-      if (drops.current[i].active) {
-        // 水滴下落
-        pos.array[i * 3 + 1] -= delta * 2.5
-        pos.array[i * 3 + 2] += delta * 0.8
-        drops.current[i].life -= delta * 0.8
-        if (drops.current[i].life <= 0) {
-          // 重置水滴（从最高点竹筒位置重新开始）
-          pos.array[i * 3] = (Math.random() - 0.5) * 0.3
-          pos.array[i * 3 + 1] = 1.6 + Math.random() * 0.2
-          pos.array[i * 3 + 2] = 0.6 + Math.random() * 0.3
-          drops.current[i].life = 1
+    const s = speed / 50
+    // 阶段1：竹筒倒水水滴下落
+    if (dropRef.current) {
+      const pos = dropRef.current.geometry.attributes.position
+      for (let i = 0; i < dropCount; i++) {
+        pos.array[i * 3 + 1] -= delta * 1.5 * s
+        pos.array[i * 3 + 2] += delta * 2.0 * s
+        dropLife.current[i] -= delta * 0.6 * s
+        if (dropLife.current[i] <= 0 || pos.array[i * 3 + 1] < 1.4) {
+          // 重置：从竹筒最高点重新开始
+          pos.array[i * 3] = (Math.random() - 0.5) * 0.15
+          pos.array[i * 3 + 1] = 1.6 + Math.random() * 0.15
+          pos.array[i * 3 + 2] = 0.3 + Math.random() * 0.2
+          dropLife.current[i] = 1
         }
       }
+      pos.needsUpdate = true
     }
-    pos.needsUpdate = true
+    // 阶段2：主槽内水流沿+Z流动
+    if (flowRef1.current) {
+      const pos = flowRef1.current.geometry.attributes.position
+      for (let i = 0; i < flow1Count; i++) {
+        pos.array[i * 3 + 2] += delta * 1.2 * s
+        if (pos.array[i * 3 + 2] > 0.8) {
+          pos.array[i * 3 + 2] = -0.7
+          pos.array[i * 3] = (Math.random() - 0.5) * 0.5
+        }
+      }
+      pos.needsUpdate = true
+    }
+    // 阶段3：导流尾槽内水流沿+Z向下流动
+    if (flowRef2.current) {
+      const pos = flowRef2.current.geometry.attributes.position
+      for (let i = 0; i < flow2Count; i++) {
+        pos.array[i * 3 + 2] += delta * 1.0 * s
+        pos.array[i * 3 + 1] -= delta * 0.4 * s
+        if (pos.array[i * 3 + 2] > 1.8) {
+          pos.array[i * 3 + 2] = 0.8
+          pos.array[i * 3 + 1] = 1.3
+          pos.array[i * 3] = (Math.random() - 0.5) * 0.4
+        }
+      }
+      pos.needsUpdate = true
+    }
   })
 
   return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={dropCount} array={positions} itemSize={3} />
-      </bufferGeometry>
-      <pointsMaterial color="#5BA3D0" size={0.1} transparent opacity={0.8} sizeAttenuation />
-    </points>
+    <group>
+      {/* 阶段1：竹筒倒水水滴（从竹筒流入导水槽主槽） */}
+      <points ref={dropRef}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" count={dropCount} array={dropPositions} itemSize={3} />
+        </bufferGeometry>
+        <pointsMaterial color="#5BA3D0" size={0.08} transparent opacity={0.85} sizeAttenuation />
+      </points>
+      {/* 阶段2：主槽内水流（沿+Z流动） */}
+      <points ref={flowRef1}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" count={flow1Count} array={flow1Positions} itemSize={3} />
+        </bufferGeometry>
+        <pointsMaterial color="#5BA3D0" size={0.07} transparent opacity={0.8} sizeAttenuation />
+      </points>
+      {/* 阶段3：导流尾槽内水流（沿+Z向下流动） */}
+      <points ref={flowRef2}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" count={flow2Count} array={flow2Positions} itemSize={3} />
+        </bufferGeometry>
+        <pointsMaterial color="#5BA3D0" size={0.07} transparent opacity={0.8} sizeAttenuation />
+      </points>
+    </group>
   )
 }

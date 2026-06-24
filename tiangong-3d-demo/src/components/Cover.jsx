@@ -23,14 +23,12 @@ export default function Cover() {
       <div className="cover-hero">
         <div className="cover-bg-decoration" />
         <div className="cover-content fade-in-up">
-          <div className="cover-badge">TRAE AI 创造力大赛 · 创意方案</div>
           <h1 className="cover-title">
             天工开物
             <span className="cover-title-sub">· 3D 书 ·</span>
           </h1>
           <p className="cover-subtitle">让古代工程智慧在指尖"活"起来</p>
           <p className="cover-desc">
-            基于 React Three Fiber + AI 的 Web 端 3D 交互古籍。<br/>
             让《天工开物》中的传统工艺真正可触、可玩、可理解。
           </p>
 
@@ -72,8 +70,6 @@ export default function Cover() {
 
       {/* 底部 */}
       <footer className="cover-footer">
-        <span>TRAE AI 创造力大赛作品</span>
-        <span className="dot">·</span>
         <span>让 130 余项古代工艺在浏览器里"活"起来</span>
       </footer>
 
