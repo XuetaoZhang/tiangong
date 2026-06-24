@@ -291,12 +291,13 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
         {/* 筒身平放在轮圈外侧，固定在挡水推板上（轮子外围），不插入轮边缘 */}
         {/* 低位入水兜水、高位自然倒水，45°倾斜是实现取水功能的关键 */}
         {tubes.map((t, i) => {
-          // 挡水推板位置（竹筒固定基座）
+          // 挡水推板位置（竹筒固定基座，筒身居中在此）
           const bladeHalfW = 0.09  // 挡水推板半宽
-          // 竹筒起点：从挡水推板外侧开始（轮子外围），不插入轮圈内部
-          const baseX = Math.cos(t.angle) * (radius + 0.05 + bladeHalfW)
-          const baseY = Math.sin(t.angle) * (radius + 0.05 + bladeHalfW)
-          const baseZ = 0
+          // 筒身居中在挡水推板上：筒中心 = 挡水推板中心位置
+          // 筒口突出轮子外侧一点，筒底在轮子内侧一点（左右对齐）
+          const centerX = Math.cos(t.angle) * (radius + 0.05)
+          const centerY = Math.sin(t.angle) * (radius + 0.05)
+          const centerZ = 0
           const tubeLen = 0.62
           const tubeR = 0.055
           // 筒方向：径向×C90(=0,垂直轮面不沿径向) + 切向(CCW前进)×S40(朝转动方向倾斜40°) + Z轴×C40(垂直轮面分量)
@@ -312,14 +313,18 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
           const quatY = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir)
           // 用quaternion旋转Z轴(torus默认法线)到筒方向（用于绳索圆环）
           const quatZ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir)
-          // 筒中心 = 起点 + 方向×半长
-          const cx = baseX + dirX * tubeLen / 2
-          const cy = baseY + dirY * tubeLen / 2
-          const cz = baseZ + dirZ * tubeLen / 2
-          // 筒口位置（朝外+Z端）
-          const mouthX = baseX + dirX * tubeLen
-          const mouthY = baseY + dirY * tubeLen
-          const mouthZ = baseZ + dirZ * tubeLen
+          // 筒中心 = 挡水推板中心（筒身左右对齐）
+          const cx = centerX
+          const cy = centerY
+          const cz = centerZ
+          // 筒口位置（朝外端，突出轮子一点）= 中心 + 方向×半长
+          const mouthX = cx + dirX * tubeLen / 2
+          const mouthY = cy + dirY * tubeLen / 2
+          const mouthZ = cz + dirZ * tubeLen / 2
+          // 筒底位置（朝内端，在轮子内侧一点）= 中心 - 方向×半长
+          const baseX = cx - dirX * tubeLen / 2
+          const baseY = cy - dirY * tubeLen / 2
+          const baseZ = cz - dirZ * tubeLen / 2
           return (
             <group key={`tube-${i}`}>
               {/* 竹筒主体（空心，openEnded，中空储水空间） */}
@@ -368,26 +373,26 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
               >
                 <sphereGeometry args={[tubeR + 0.012, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
               </mesh>
-              {/* 竹节纹（2道竹节箍，分段结构） */}
+              {/* 竹节纹（2道竹节箍，分段结构，基于筒中心相对位置） */}
               {[0.35, 0.7].map((p, j) => (
                 <mesh
                   key={`node-${i}-${j}`}
                   material={woodMat('tube', '#6B5230')}
                   castShadow
-                  position={[baseX + dirX * tubeLen * p, baseY + dirY * tubeLen * p, baseZ + dirZ * tubeLen * p]}
+                  position={[cx + dirX * tubeLen * (p - 0.5), cy + dirY * tubeLen * (p - 0.5), cz + dirZ * tubeLen * (p - 0.5)]}
                   quaternion={[quatY.x, quatY.y, quatY.z, quatY.w]}
                 >
                   <cylinderGeometry args={[tubeR + 0.01, tubeR + 0.01, 0.03, 14]} />
                 </mesh>
               ))}
 
-              {/* 固定结构：绳索/木扎带（2道，斜绑在筒身与挡水推板连接处） */}
-              {[0.12, 0.28].map((p, j) => (
+              {/* 固定结构：绳索/木扎带（2道，斜绑在筒身与挡水推板连接处，基于筒中心） */}
+              {[-0.15, 0.15].map((offset, j) => (
                 <mesh
                   key={`strap-${i}-${j}`}
                   material={woodMat('blade', '#4A2E1A')}
                   castShadow
-                  position={[baseX + dirX * tubeLen * p, baseY + dirY * tubeLen * p, baseZ + dirZ * tubeLen * p]}
+                  position={[cx + dirX * offset, cy + dirY * offset, cz + dirZ * offset]}
                   quaternion={[quatZ.x, quatZ.y, quatZ.z, quatZ.w]}
                   onClick={(e) => { e.stopPropagation(); onSelectPart('blade') }}
                 >
