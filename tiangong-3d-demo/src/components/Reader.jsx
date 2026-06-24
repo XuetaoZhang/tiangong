@@ -367,15 +367,19 @@ function ReaderStyles() {
       /* ===== 古籍插图底图（右页）—— 天工开物原版古籍原图 ===== */
       .illustration-bg {
         position: absolute; inset: 1.5rem 1.2rem 2rem 1.2rem; z-index: 2;
-        opacity: 0.85; pointer-events: none;
+        opacity: 1; pointer-events: none;
         display: flex; align-items: center; justify-content: center;
+        /* 容器背景色与书页米黄宣纸一致，PNG 白底已变透明，图片自然融入 */
+        background:
+          linear-gradient(135deg, #F4ECD8 0%, #EDE3CC 50%, #E8DCC0 100%);
+        border-radius: 2px;
       }
       .illus-img {
         max-width: 100%; max-height: 100%;
         width: auto; height: auto;
         object-fit: contain;
-        filter: drop-shadow(0 2px 6px rgba(139,69,19,0.2)) sepia(0.15);
-        mix-blend-mode: multiply;
+        /* 轻微 sepia 让黑线偏暖棕，融入宣纸 */
+        filter: sepia(0.4) saturate(0.9) brightness(0.95) drop-shadow(0 2px 6px rgba(139,69,19,0.2));
       }
 
       /* ===== 3D 器物悬浮层（独立于书本，正立悬浮在书本上空） ===== */
