@@ -93,6 +93,9 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
   const C45 = Math.cos(Math.PI / 4)
   const S45 = Math.sin(Math.PI / 4)
 
+  const C90 = Math.cos(Math.PI / 2)
+  const S90 = Math.sin(Math.PI / 2)
+
   return (
     <group position={[0, -0.4, 0]}>
       {/* ============================================================ */}
@@ -161,9 +164,9 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
           )
         })}
 
-        {/* 夹层挡水木片（24片，与竹筒交错，垂直轮圈平面，增大水流推力） */}
+        {/* 夹层挡水推板（24片，与竹筒同角度一一对齐，垂直轮圈平面，增大水流推力，也是竹筒固定基座） */}
         {Array.from({ length: bladePlateCount }).map((_, i) => {
-          const a = (i / bladePlateCount) * Math.PI * 2 + Math.PI / 24
+          const a = (i / bladePlateCount) * Math.PI * 2
           return (
             <mesh
               key={`bplate-${i}`}
@@ -173,7 +176,7 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
               rotation={[0, 0, a]}
               onClick={(e) => { e.stopPropagation(); onSelectPart('blade') }}
             >
-              <boxGeometry args={[0.16, 0.04, ringOffset * 2 + 0.1]} />
+              <boxGeometry args={[0.18, 0.05, ringOffset * 2 + 0.12]} />
             </mesh>
           )
         })}
@@ -279,103 +282,111 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
           )
         })}
 
-        {/* ===== 汲水竹筒（轮平面内与径向呈45°，筒口朝CCW前进方向外侧下方） ===== */}
+        {/* ===== 汲水竹筒（筒身垂直轮面+45°倾斜，筒口朝外+Z侧，固定在挡水推板上） ===== */}
+        {/* 标准模型：筒身与轮面垂直（有Z分量），与径向呈45° */}
+        {/* 筒身平放在轮圈外侧，固定在挡水推板上（轮子外围），不插入轮边缘 */}
+        {/* 低位入水兜水、高位自然倒水，45°倾斜是实现取水功能的关键 */}
         {tubes.map((t, i) => {
-          const px = Math.cos(t.angle) * radius
-          const py = Math.sin(t.angle) * radius
-          const tubeLen = 0.58
-          const tubeR = 0.052
-          // 竹筒方向：径向(朝外)×C45 + 切向(CCW前进)×S45
-          // CCW前进切向 = (-sin(angle), cos(angle))
-          const radX = Math.cos(t.angle)
-          const radY = Math.sin(t.angle)
-          const tanX = -Math.sin(t.angle)
-          const tanY = Math.cos(t.angle)
-          const dirX = radX * C45 + tanX * S45
-          const dirY = radY * C45 + tanY * S45
-          // 竹筒中心 = 轮缘点 + 方向×半长
-          const cx = px + dirX * tubeLen / 2
-          const cy = py + dirY * tubeLen / 2
-          // cylinder默认沿Y轴，旋转到dir方向
-          const tubeAngle = Math.atan2(dirY, dirX) - Math.PI / 2
-          // 筒口位置（朝外端，CCW前进方向）
-          const mouthX = px + dirX * tubeLen
-          const mouthY = py + dirY * tubeLen
+          // 挡水推板位置（竹筒固定基座）
+          const bladeHalfW = 0.09  // 挡水推板半宽
+          // 竹筒起点：从挡水推板外侧开始（轮子外围），不插入轮圈内部
+          const baseX = Math.cos(t.angle) * (radius + 0.05 + bladeHalfW)
+          const baseY = Math.sin(t.angle) * (radius + 0.05 + bladeHalfW)
+          const baseZ = 0
+          const tubeLen = 0.62
+          const tubeR = 0.055
+          // 筒方向：径向(朝外)×cos45 + Z轴(朝观众)×sin45
+          // 筒身垂直于轮面（有Z分量），与径向呈45°
+          const dirX = Math.cos(t.angle) * C90
+          const dirY = Math.sin(t.angle) * C90
+          const dirZ = S45
+          // 用quaternion旋转Y轴(cylinder默认轴)到筒方向
+          const dir = new THREE.Vector3(dirX, dirY, dirZ).normalize()
+          const quatY = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir)
+          // 用quaternion旋转Z轴(torus默认法线)到筒方向（用于绳索圆环）
+          const quatZ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir)
+          // 筒中心 = 起点 + 方向×半长
+          const cx = baseX + dirX * tubeLen / 2
+          const cy = baseY + dirY * tubeLen / 2
+          const cz = baseZ + dirZ * tubeLen / 2
+          // 筒口位置（朝外+Z端）
+          const mouthX = baseX + dirX * tubeLen
+          const mouthY = baseY + dirY * tubeLen
+          const mouthZ = baseZ + dirZ * tubeLen
           return (
             <group key={`tube-${i}`}>
-              {/* 竹筒主体（中空竹筒） */}
+              {/* 竹筒主体（空心，openEnded，中空储水空间） */}
               <mesh
                 material={woodMat('tube', '#A0824A')}
                 castShadow
-                position={[cx, cy, 0]}
-                rotation={[0, 0, tubeAngle]}
+                position={[cx, cy, cz]}
+                quaternion={[quatY.x, quatY.y, quatY.z, quatY.w]}
                 onClick={(e) => { e.stopPropagation(); onSelectPart('tube') }}
               >
-                <cylinderGeometry args={[tubeR, tubeR, tubeLen, 12]} />
+                <cylinderGeometry args={[tubeR, tubeR, tubeLen, 14]} openEnded />
               </mesh>
-              {/* 竹筒内壁（空心内凹效果，体现盛水容器属性） */}
+              {/* 竹筒内壁（深色，体现中空腔体，BackSide渲染内壁） */}
+              <mesh
+                position={[cx, cy, cz]}
+                quaternion={[quatY.x, quatY.y, quatY.z, quatY.w]}
+              >
+                <cylinderGeometry args={[tubeR * 0.78, tubeR * 0.78, tubeLen * 0.96, 12]} openEnded />
+                <meshStandardMaterial color="#3A2518" roughness={0.9} side={THREE.BackSide} />
+              </mesh>
+              {/* 筒封闭端（贴挡水推板端，圆盘封底） */}
               <mesh
                 material={woodMat('tube', '#6B5230')}
-                position={[mouthX, mouthY, 0]}
-                rotation={[0, 0, tubeAngle]}
+                castShadow
+                position={[baseX + dirX * 0.02, baseY + dirY * 0.02, baseZ + dirZ * 0.02]}
+                quaternion={[quatY.x, quatY.y, quatY.z, quatY.w]}
               >
-                <cylinderGeometry args={[tubeR * 0.7, tubeR * 0.7, 0.12, 12]} openEnded />
+                <cylinderGeometry args={[tubeR, tubeR, 0.04, 14]} />
               </mesh>
-              {/* 竹节纹（3道竹节箍，分段结构） */}
-              {[0.25, 0.5, 0.75].map((p, j) => (
+              {/* 筒头（开口端，圆弧形竹节造型，稍大圆环+圆弧收口） */}
+              <mesh
+                material={woodMat('tube', '#8B6F3A')}
+                castShadow
+                position={[mouthX, mouthY, mouthZ]}
+                quaternion={[quatY.x, quatY.y, quatY.z, quatY.w]}
+                onClick={(e) => { e.stopPropagation(); onSelectPart('tube') }}
+              >
+                <cylinderGeometry args={[tubeR + 0.015, tubeR + 0.005, 0.07, 14]} openEnded />
+              </mesh>
+              {/* 筒头圆弧（球形竹节造型，半圆球） */}
+              <mesh
+                material={woodMat('tube', '#8B6F3A')}
+                castShadow
+                position={[mouthX + dirX * 0.03, mouthY + dirY * 0.03, mouthZ + dirZ * 0.03]}
+                quaternion={[quatY.x, quatY.y, quatY.z, quatY.w]}
+              >
+                <sphereGeometry args={[tubeR + 0.012, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+              </mesh>
+              {/* 竹节纹（2道竹节箍，分段结构） */}
+              {[0.35, 0.7].map((p, j) => (
                 <mesh
                   key={`node-${i}-${j}`}
                   material={woodMat('tube', '#6B5230')}
                   castShadow
-                  position={[px + dirX * tubeLen * p, py + dirY * tubeLen * p, 0]}
-                  rotation={[0, 0, tubeAngle]}
+                  position={[baseX + dirX * tubeLen * p, baseY + dirY * tubeLen * p, baseZ + dirZ * tubeLen * p]}
+                  quaternion={[quatY.x, quatY.y, quatY.z, quatY.w]}
                 >
-                  <cylinderGeometry args={[tubeR + 0.01, tubeR + 0.01, 0.028, 12]} />
+                  <cylinderGeometry args={[tubeR + 0.01, tubeR + 0.01, 0.03, 14]} />
                 </mesh>
               ))}
-              {/* 竹筒开口（朝外端，开口朝CCW前进方向外侧下方） */}
-              <mesh
-                material={woodMat('tube', '#8B6F3A')}
-                castShadow
-                position={[mouthX, mouthY, 0]}
-                rotation={[0, 0, tubeAngle]}
-                onClick={(e) => { e.stopPropagation(); onSelectPart('tube') }}
-              >
-                <cylinderGeometry args={[tubeR + 0.008, tubeR + 0.008, 0.05, 12]} openEnded />
-              </mesh>
 
-              {/* 卡扣（托槽榫卯造型：下半托槽+上半卡榫，夹持双层轮圈连接木与竹筒） */}
-              <group position={[px, py, 0]} rotation={[0, 0, t.angle]}>
-                {/* 托槽底座（带倒角方块，夹持双层轮圈连接木） */}
+              {/* 固定结构：绳索/木扎带（2道，斜绑在筒身与挡水推板连接处） */}
+              {[0.12, 0.28].map((p, j) => (
                 <mesh
-                  material={woodMat('blade', '#6B4226')}
+                  key={`strap-${i}-${j}`}
+                  material={woodMat('blade', '#4A2E1A')}
                   castShadow
-                  position={[0.08, 0, 0]}
+                  position={[baseX + dirX * tubeLen * p, baseY + dirY * tubeLen * p, baseZ + dirZ * tubeLen * p]}
+                  quaternion={[quatZ.x, quatZ.y, quatZ.z, quatZ.w]}
                   onClick={(e) => { e.stopPropagation(); onSelectPart('blade') }}
                 >
-                  <boxGeometry args={[0.14, 0.18, ringOffset * 2 + 0.1]} />
+                  <torusGeometry args={[tubeR + 0.018, 0.014, 6, 14]} />
                 </mesh>
-                {/* 下半圆弧托槽（半torus，托住竹筒筒身） */}
-                <mesh
-                  material={woodMat('blade', '#7B4F2E')}
-                  castShadow
-                  position={[0.12, 0, 0]}
-                  rotation={[Math.PI / 2, 0, 0]}
-                  onClick={(e) => { e.stopPropagation(); onSelectPart('blade') }}
-                >
-                  <torusGeometry args={[tubeR + 0.018, 0.028, 8, 14, Math.PI]} />
-                </mesh>
-                {/* 上半卡榫（半torus，卡住竹筒外壁） */}
-                <mesh
-                  material={woodMat('blade', '#7B4F2E')}
-                  castShadow
-                  position={[0.12, 0, 0]}
-                  rotation={[Math.PI / 2, 0, Math.PI]}
-                  onClick={(e) => { e.stopPropagation(); onSelectPart('blade') }}
-                >
-                  <torusGeometry args={[tubeR + 0.018, 0.024, 8, 14, Math.PI * 0.7]} />
-                </mesh>
-              </group>
+              ))}
             </group>
           )
         })}
