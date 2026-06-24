@@ -447,8 +447,8 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
       {/* ===== 导水槽天池（在轮子侧面+Z侧，靠近筒口，沿Z延伸，和轮子平面垂直） ===== */}
       {/* 位置：轮子侧面+Z侧，轮轴上方一点，靠近竹筒筒口，接住最高点倒出的水 */}
       {/* 方向：沿Z方向延伸（和轮子所在XY平面垂直），向+Z倾斜导流 */}
-      {/* 向+Z外移，避免与轮子模型重合 */}
-      <group position={[0, radius - 0.3, 1.3]} rotation={[0.22, 0, 0]}>
+      {/* 向+Z外移，避免与轮子模型重合；下移让水滴落入槽内 */}
+      <group position={[0, radius - 0.9, 1.3]} rotation={[0.22, 0, 0]}>
         {/* 槽体（宽浅长木槽，沿Z延伸，向+Z倾斜导流） */}
         <mesh
           material={woodMat('trough', '#6B4226')}
@@ -645,11 +645,12 @@ function TubeWaterFlow({ wheelRef, speed }) {
   const flowRef2 = useRef()  // 导流尾槽内水流
 
   // 阶段1：竹筒倒水水滴（从最高点竹筒流入导水槽主槽）
+  // 导水槽在 y≈1.1，槽体上表面 y≈1.15
   const dropCount = 20
   const dropPositions = useMemo(() => {
     const arr = new Float32Array(dropCount * 3)
     for (let i = 0; i < dropCount; i++) {
-      // 从竹筒最高点位置（y≈1.7, z≈0.2）流到导水槽主槽（y≈1.4, z≈1.3）
+      // 从竹筒最高点位置（y≈1.7, z≈0.2）流到导水槽主槽（y≈1.15, z≈1.3）
       arr[i * 3] = (Math.random() - 0.5) * 0.15
       arr[i * 3 + 1] = 1.5 + Math.random() * 0.2
       arr[i * 3 + 2] = 0.3 + Math.random() * 0.3
@@ -658,27 +659,27 @@ function TubeWaterFlow({ wheelRef, speed }) {
   }, [])
   const dropLife = useRef(Array.from({ length: dropCount }, () => Math.random()))
 
-  // 阶段2：主槽内水流（沿+Z流动，从z=-0.8到z=0.8）
+  // 阶段2：主槽内水流（沿+Z流动，从z=-0.8到z=0.8，在槽体上表面 y≈1.15）
   const flow1Count = 25
   const flow1Positions = useMemo(() => {
     const arr = new Float32Array(flow1Count * 3)
     for (let i = 0; i < flow1Count; i++) {
       arr[i * 3] = (Math.random() - 0.5) * 0.5
-      arr[i * 3 + 1] = 1.45
+      arr[i * 3 + 1] = 1.15
       arr[i * 3 + 2] = -0.7 + Math.random() * 1.4
     }
     return arr
   }, [])
 
-  // 阶段3：导流尾槽内水流（沿+Z向下流动）
+  // 阶段3：导流尾槽内水流（沿+Z向下流动，尾槽从z=0.8到z=1.8，倾斜下降）
   const flow2Count = 20
   const flow2Positions = useMemo(() => {
     const arr = new Float32Array(flow2Count * 3)
     for (let i = 0; i < flow2Count; i++) {
       const t = Math.random()
-      // 尾槽从z=0.8到z=1.8，倾斜下降
+      // 尾槽倾斜下降，从 y=1.1 到 y=0.7
       arr[i * 3] = (Math.random() - 0.5) * 0.4
-      arr[i * 3 + 1] = 1.3 - t * 0.4
+      arr[i * 3 + 1] = 1.1 - t * 0.4
       arr[i * 3 + 2] = 0.8 + t * 1.0
     }
     return arr
@@ -693,7 +694,7 @@ function TubeWaterFlow({ wheelRef, speed }) {
         pos.array[i * 3 + 1] -= delta * 1.5 * s
         pos.array[i * 3 + 2] += delta * 2.0 * s
         dropLife.current[i] -= delta * 0.6 * s
-        if (dropLife.current[i] <= 0 || pos.array[i * 3 + 1] < 1.4) {
+        if (dropLife.current[i] <= 0 || pos.array[i * 3 + 1] < 1.15) {
           // 重置：从竹筒最高点重新开始
           pos.array[i * 3] = (Math.random() - 0.5) * 0.15
           pos.array[i * 3 + 1] = 1.6 + Math.random() * 0.15
@@ -723,7 +724,7 @@ function TubeWaterFlow({ wheelRef, speed }) {
         pos.array[i * 3 + 1] -= delta * 0.4 * s
         if (pos.array[i * 3 + 2] > 1.8) {
           pos.array[i * 3 + 2] = 0.8
-          pos.array[i * 3 + 1] = 1.3
+          pos.array[i * 3 + 1] = 1.1
           pos.array[i * 3] = (Math.random() - 0.5) * 0.4
         }
       }

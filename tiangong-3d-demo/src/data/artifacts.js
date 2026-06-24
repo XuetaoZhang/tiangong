@@ -97,7 +97,7 @@ export const artifacts = {
         id: 'trough',
         name: '导水槽天池',
         position: [0, 0, 0],
-        hotspot: [0, 1.4, 1.3],
+        hotspot: [0, 0.8, 1.3],
         explanation: {
           student: '导水槽天池是接水的小水沟，竹筒倒出来的水顺着它流到田里。',
           standard: '导水槽天池在轮子侧面+Z侧，靠近竹筒筒口，沿Z方向延伸（和轮子平面垂直），向+Z倾斜导流。竹筒到最高点倒水时，水落入槽中，经导流尾槽送至农田。',
