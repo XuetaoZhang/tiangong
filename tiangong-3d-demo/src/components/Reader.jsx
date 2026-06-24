@@ -364,15 +364,18 @@ function ReaderStyles() {
           radial-gradient(circle at 4px 82%, rgba(42,24,16,0.5) 2px, transparent 3px);
       }
 
-      /* ===== 古籍插图底图（右页） ===== */
+      /* ===== 古籍插图底图（右页）—— 天工开物原版古籍原图 ===== */
       .illustration-bg {
-        position: absolute; inset: 2.5rem 2rem 2.5rem 2rem; z-index: 2;
-        opacity: 0.32; pointer-events: none;
+        position: absolute; inset: 1.5rem 1.2rem 2rem 1.2rem; z-index: 2;
+        opacity: 0.85; pointer-events: none;
         display: flex; align-items: center; justify-content: center;
       }
-      .illus-svg {
-        width: 80%; height: 80%; max-width: 360px;
-        filter: drop-shadow(0 2px 4px rgba(139,69,19,0.1));
+      .illus-img {
+        max-width: 100%; max-height: 100%;
+        width: auto; height: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 6px rgba(139,69,19,0.2)) sepia(0.15);
+        mix-blend-mode: multiply;
       }
 
       /* ===== 3D 器物悬浮层（独立于书本，正立悬浮在书本上空） ===== */
