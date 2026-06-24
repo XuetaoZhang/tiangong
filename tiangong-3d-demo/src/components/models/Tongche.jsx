@@ -270,21 +270,6 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
         <mesh material={woodMat('wheel', '#2A1810')} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[axleRadius + 0.02, axleRadius + 0.02, hubWidth + 0.1, 16]} />
         </mesh>
-        {/* 辐条与轮毂衔接榫卯（16个凸榫） */}
-        {Array.from({ length: spokeCount }).map((_, i) => {
-          const a = (i / spokeCount) * Math.PI * 2
-          return (
-            <mesh
-              key={`hub-mortise-${i}`}
-              material={woodMat('wheel', '#4A2E1A')}
-              castShadow
-              position={[Math.cos(a) * (hubRadius + 0.05), Math.sin(a) * (hubRadius + 0.05), 0]}
-              rotation={[0, 0, a]}
-            >
-              <boxGeometry args={[0.12, 0.08, hubWidth * 0.9]} />
-            </mesh>
-          )
-        })}
 
         {/* ===== 汲水竹筒（筒身垂直轮面+45°倾斜，筒口朝外+Z侧，固定在挡水推板上） ===== */}
         {/* 标准模型：筒身与轮面垂直（有Z分量），与径向呈45° */}
@@ -432,31 +417,23 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
         </group>
       ))}
 
-      {/* ===== 左右分立双立柱（加宽间距，轮子悬空，粗壮方木） ===== */}
+      {/* ===== 左右分立双立柱（只到轮轴，去掉轮轴以上部分，粗壮方木） ===== */}
       {[-pillarZ, pillarZ].map((z) => (
         <group key={`pillar-${z}`}>
-          {/* 立柱主体（粗壮方木，截面加厚） */}
+          {/* 立柱主体（粗壮方木，从底座到轮轴，截面加厚） */}
           <mesh
             material={woodMat('wheel', '#7B4F2E')}
             castShadow
-            position={[0, 0, z]}
+            position={[0, -1.6, z]}
             onClick={(e) => { e.stopPropagation(); onSelectPart('wheel') }}
           >
-            <boxGeometry args={[0.38, radius * 2 + 1.8, 0.38]} />
-          </mesh>
-          {/* 立柱顶帽（榫卯咬合，凹凸拼接） */}
-          <mesh material={woodMat('wheel', '#5C3A1E')} position={[0, radius + 1.0, z]} castShadow>
-            <boxGeometry args={[0.48, 0.24, 0.48]} />
-          </mesh>
-          {/* 顶帽榫头（凸出，咬合横梁） */}
-          <mesh material={woodMat('wheel', '#6B4226')} position={[0, radius + 0.86, z]} castShadow>
-            <boxGeometry args={[0.22, 0.08, 0.22]} />
+            <boxGeometry args={[0.38, 3.2, 0.38]} />
           </mesh>
           {/* 立柱底榫 */}
-          <mesh material={woodMat('wheel', '#4A2E1A')} position={[0, -radius - 1.0, z]} castShadow>
+          <mesh material={woodMat('wheel', '#4A2E1A')} position={[0, -3.2, z]} castShadow>
             <boxGeometry args={[0.48, 0.24, 0.48]} />
           </mesh>
-          {/* 轴孔木（立柱中部的轴座，加粗，带凹槽） */}
+          {/* 轴孔木（立柱顶部的轴座，加粗，带凹槽，直接支撑轮轴） */}
           <mesh material={woodMat('wheel', '#6B4226')} position={[0, 0, z - Math.sign(z) * 0.07]} castShadow>
             <boxGeometry args={[0.44, 0.6, 0.28]} />
           </mesh>
@@ -467,111 +444,62 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
         </group>
       ))}
 
-      {/* ===== 顶部双层叠梁（加长延伸到右侧，榫卯拼接） ===== */}
-      <group position={[0, radius + 1.05, 0]}>
-        {/* 上层横梁1（前侧，加长延伸） */}
-        <mesh
-          material={woodMat('trough', '#7B4F2E')}
-          castShadow
-          position={[1.1, 0.12, pillarZ]}
-          onClick={(e) => { e.stopPropagation(); onSelectPart('trough') }}
-        >
-          <boxGeometry args={[3.2, 0.2, 0.2]} />
-        </mesh>
-        {/* 上层横梁2（后侧，加长延伸） */}
-        <mesh
-          material={woodMat('trough', '#7B4F2E')}
-          castShadow
-          position={[1.1, 0.12, -pillarZ]}
-          onClick={(e) => { e.stopPropagation(); onSelectPart('trough') }}
-        >
-          <boxGeometry args={[3.2, 0.2, 0.2]} />
-        </mesh>
-        {/* 下层叠梁1（前侧） */}
-        <mesh
-          material={woodMat('trough', '#6B4226')}
-          castShadow
-          position={[1.1, -0.1, pillarZ]}
-          onClick={(e) => { e.stopPropagation(); onSelectPart('trough') }}
-        >
-          <boxGeometry args={[3.2, 0.18, 0.18]} />
-        </mesh>
-        {/* 下层叠梁2（后侧） */}
-        <mesh
-          material={woodMat('trough', '#6B4226')}
-          castShadow
-          position={[1.1, -0.1, -pillarZ]}
-          onClick={(e) => { e.stopPropagation(); onSelectPart('trough') }}
-        >
-          <boxGeometry args={[3.2, 0.18, 0.18]} />
-        </mesh>
-        {/* 横梁连接短木（稳定） */}
-        <mesh material={woodMat('trough', '#5C3A1E')} position={[1.1, 0, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.18, pillarZ * 2 - 0.3]} />
-        </mesh>
-        {/* 横梁与立柱榫卯节点（凸榫咬合） */}
-        {[-pillarZ, pillarZ].map((z) => (
-          <mesh key={`beam-mortise-${z}`} material={woodMat('trough', '#5C3A1E')} position={[-0.5, 0, z]} castShadow>
-            <boxGeometry args={[0.28, 0.28, 0.28]} />
-          </mesh>
-        ))}
-      </group>
-
-      {/* ===== 导水槽天池（右移对位，紧贴最高点，宽浅长斜木槽） ===== */}
-      {/* 位置：右移对位，紧贴水轮最高点正前方，精准承接竹筒倾倒的水流 */}
-      <group position={[0.5, radius + 0.55, 0]} rotation={[0, 0, -0.24]}>
-        {/* 槽体（宽浅长木槽，向右下倾斜导流） */}
+      {/* ===== 导水槽天池（在轮子侧面+Z侧，靠近筒口，沿Z延伸，和轮子平面垂直） ===== */}
+      {/* 位置：轮子侧面+Z侧，轮轴上方一点，靠近竹筒筒口，接住最高点倒出的水 */}
+      {/* 方向：沿Z方向延伸（和轮子所在XY平面垂直），向+Z倾斜导流 */}
+      <group position={[0, radius - 0.3, 1.0]} rotation={[0.22, 0, 0]}>
+        {/* 槽体（宽浅长木槽，沿Z延伸，向+Z倾斜导流） */}
         <mesh
           material={woodMat('trough', '#6B4226')}
           castShadow
           onClick={(e) => { e.stopPropagation(); onSelectPart('trough') }}
         >
-          <boxGeometry args={[2.0, 0.1, 1.1]} />
+          <boxGeometry args={[0.8, 0.1, 1.6]} />
         </mesh>
         {/* 槽内凹陷（水道，浅而宽） */}
         <mesh position={[0, 0.04, 0]}>
-          <boxGeometry args={[1.9, 0.06, 0.96]} />
+          <boxGeometry args={[0.7, 0.06, 1.5]} />
           <meshStandardMaterial color="#2A1810" roughness={0.9} />
         </mesh>
-        {/* 槽壁前（低矮挡水围边） */}
-        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[0, 0.08, 0.55]}>
-          <boxGeometry args={[2.0, 0.16, 0.06]} />
+        {/* 槽壁左（X-侧，低矮挡水围边） */}
+        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[-0.4, 0.08, 0]}>
+          <boxGeometry args={[0.06, 0.16, 1.6]} />
         </mesh>
-        {/* 槽壁后（低矮挡水围边） */}
-        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[0, 0.08, -0.55]}>
-          <boxGeometry args={[2.0, 0.16, 0.06]} />
+        {/* 槽壁右（X+侧） */}
+        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[0.4, 0.08, 0]}>
+          <boxGeometry args={[0.06, 0.16, 1.6]} />
         </mesh>
-        {/* 槽壁左（高端，接水处，加高） */}
-        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[-1.0, 0.12, 0]}>
-          <boxGeometry args={[0.06, 0.24, 1.1]} />
+        {/* 槽壁近（Z-侧，高端，靠近轮子，接水处，加高） */}
+        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[0, 0.12, -0.8]}>
+          <boxGeometry args={[0.8, 0.24, 0.06]} />
         </mesh>
-        {/* 槽壁右（低端，出水处，较低） */}
-        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[1.0, 0.08, 0]}>
-          <boxGeometry args={[0.06, 0.16, 1.1]} />
+        {/* 槽壁远（Z+侧，低端，出水处，较低） */}
+        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[0, 0.08, 0.8]}>
+          <boxGeometry args={[0.8, 0.16, 0.06]} />
         </mesh>
-        {/* 导流尾槽（末端细长导流木槽，向下引导水流至农田） */}
+        {/* 导流尾槽（末端细长导流木槽，沿+Z向下引导水流至农田） */}
         <mesh
           material={woodMat('trough', '#6B4226')}
           castShadow
-          position={[1.7, -0.18, 0]}
-          rotation={[0, 0, -0.38]}
+          position={[0, -0.18, 1.3]}
+          rotation={[0.38, 0, 0]}
           onClick={(e) => { e.stopPropagation(); onSelectPart('trough') }}
         >
-          <boxGeometry args={[1.0, 0.08, 0.55]} />
+          <boxGeometry args={[0.55, 0.08, 1.0]} />
         </mesh>
         {/* 导流尾槽侧壁 */}
-        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[1.7, -0.1, 0.28]} rotation={[0, 0, -0.38]}>
-          <boxGeometry args={[1.0, 0.12, 0.05]} />
+        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[0.28, -0.1, 1.3]} rotation={[0.38, 0, 0]}>
+          <boxGeometry args={[0.05, 0.12, 1.0]} />
         </mesh>
-        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[1.7, -0.1, -0.28]} rotation={[0, 0, -0.38]}>
-          <boxGeometry args={[1.0, 0.12, 0.05]} />
+        <mesh material={woodMat('trough', '#7B4F2E')} castShadow position={[-0.28, -0.1, 1.3]} rotation={[0.38, 0, 0]}>
+          <boxGeometry args={[0.05, 0.12, 1.0]} />
         </mesh>
-        {/* 水槽底部斜撑木（托举水槽，连接到顶梁延伸段） */}
-        <mesh material={woodMat('trough', '#5C3A1E')} castShadow position={[-0.7, -0.32, 0.4]} rotation={[0, 0, 0.55]}>
-          <boxGeometry args={[0.14, 0.65, 0.14]} />
+        {/* 水槽底部斜撑木（托举水槽，从立柱顶部连接到水槽） */}
+        <mesh material={woodMat('trough', '#5C3A1E')} castShadow position={[0.25, -0.6, 0.4]} rotation={[1.1, 0, 0]}>
+          <boxGeometry args={[0.14, 1.4, 0.14]} />
         </mesh>
-        <mesh material={woodMat('trough', '#5C3A1E')} castShadow position={[-0.7, -0.32, -0.4]} rotation={[0, 0, 0.55]}>
-          <boxGeometry args={[0.14, 0.65, 0.14]} />
+        <mesh material={woodMat('trough', '#5C3A1E')} castShadow position={[-0.25, -0.6, 0.4]} rotation={[1.1, 0, 0]}>
+          <boxGeometry args={[0.14, 1.4, 0.14]} />
         </mesh>
       </group>
 
