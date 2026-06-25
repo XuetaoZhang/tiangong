@@ -1,8 +1,19 @@
-import React from 'react'
+import React, { useState, useRef } from 'react'
 import { useStore } from '../store/useStore.js'
 
 export default function Cover() {
   const go = useStore((s) => s.go)
+  const [opening, setOpening] = useState(false)   // 是否正在播放打开动画
+  const timer = useRef(null)
+
+  // 点击"开始阅读"：触发 3D 翻书动画，结束后进入目录
+  const handleStart = () => {
+    if (opening) return
+    setOpening(true)
+    timer.current = setTimeout(() => {
+      go('catalog')
+    }, 1700)  // 与翻页动画时长匹配
+  }
 
   return (
     <div className="cover">
@@ -19,10 +30,10 @@ export default function Cover() {
         </div>
       </nav>
 
-      {/* 主视觉 */}
+      {/* 主视觉：左文案 + 右合上的线装本 */}
       <div className="cover-hero">
         <div className="cover-bg-decoration" />
-        <div className="cover-content fade-in-up">
+        <div className={`cover-content fade-in-up ${opening ? 'fading' : ''}`}>
           <h1 className="cover-title">
             天工开物
             <span className="cover-title-sub">· 3D 书 ·</span>
@@ -33,11 +44,12 @@ export default function Cover() {
           </p>
 
           <div className="cover-cta">
-            <button className="btn btn-primary cover-cta-main" onClick={() => go('catalog')}>
-              开启阅读 →
-            </button>
-            <button className="btn btn-ghost" onClick={() => go('catalog')}>
-              观看演示 ▶
+            <button
+              className="btn btn-primary cover-cta-main"
+              onClick={handleStart}
+              disabled={opening}
+            >
+              {opening ? '正在翻开…' : '开启阅读 →'}
             </button>
           </div>
 
@@ -49,28 +61,75 @@ export default function Cover() {
           </div>
         </div>
 
-        {/* 装饰：3D 书本预览 */}
-        <div className="cover-book-preview">
-          <div className="floating-book">
-            <div className="book-spine" />
-            <div className="book-page book-page-left">
-              <div className="book-line" />
-              <div className="book-line" />
-              <div className="book-line short" />
-              <div className="book-line" />
-              <div className="book-line short" />
-              <div className="book-seal" />
+        {/* ===== 3D 线装本（合上状态，点击翻页打开） ===== */}
+        <div className={`cover-book-stage ${opening ? 'opening' : ''}`} onClick={handleStart}>
+          <div className="book-3d">
+            {/* 书脊（左侧立柱，深色木布质感） */}
+            <div className="book-spine-3d" />
+
+            {/* 书页厚度（右侧切口，宣纸层叠纹理） */}
+            <div className="book-pages-edge">
+              {Array.from({ length: 14 }).map((_, i) => (
+                <div key={i} className="page-layer" style={{ right: i * 0.5 }} />
+              ))}
             </div>
-            <div className="book-page book-page-right">
-              <div className="book-illustration" />
+
+            {/* 内页（翻开封面后露出的目录页，预先铺好） */}
+            <div className="book-inside">
+              <div className="inside-left">
+                <div className="inside-titlepage">
+                  <div className="inside-title">天工開物</div>
+                  <div className="inside-author">明 宋應星 著</div>
+                  <div className="inside-seal">卷之上</div>
+                </div>
+                <div className="binding-holes-cover">
+                  <span /><span /><span /><span />
+                </div>
+              </div>
+              <div className="inside-right">
+                <div className="inside-mark">目　錄</div>
+                <div className="inside-toc">
+                  <span>乃粒　水利</span>
+                  <span>乃服　纺织</span>
+                  <span>治铸　铸造</span>
+                  <span>杀青　造纸</span>
+                </div>
+              </div>
             </div>
+
+            {/* 封面（最外层，可翻动；正面=书名页，背面=扉页） */}
+            <div className="book-cover">
+              {/* 封面正面 */}
+              <div className="cover-face cover-front">
+                <div className="cover-border-frame">
+                  <div className="cover-tie-label">
+                    <span className="tie-line">天</span>
+                    <span className="tie-line">工</span>
+                    <span className="tie-line">開</span>
+                    <span className="tie-line">物</span>
+                  </div>
+                  <div className="cover-author">明 · 宋應星 著</div>
+                  <div className="cover-seal">天</div>
+                </div>
+                <div className="binding-holes-cover">
+                  <span /><span /><span /><span />
+                </div>
+              </div>
+              {/* 封面背面（翻开过程中看到的内侧） */}
+              <div className="cover-face cover-back">
+                <div className="back-mark">序</div>
+              </div>
+            </div>
+
+            {/* 书底投影 */}
+            <div className="book-shadow-3d" />
           </div>
         </div>
       </div>
 
       {/* 底部 */}
       <footer className="cover-footer">
-        <span>让 130 余项古代工艺在浏览器里"活"起来</span>
+        <span>点击「开启阅读」翻开这本线装古籍 →</span>
       </footer>
 
       <style>{`
@@ -112,15 +171,13 @@ export default function Cover() {
         .cover-hero {
           flex: 1; position: relative; z-index: 5;
           display: flex; align-items: center; justify-content: center;
-          padding: 0 2rem;
+          padding: 0 2rem; gap: 3rem;
         }
-        .cover-content { max-width: 560px; text-align: center; z-index: 2; }
-        .cover-badge {
-          display: inline-block; font-size: 0.72rem; font-weight: 600;
-          letter-spacing: 0.15em; color: rgba(232,200,140,0.8);
-          border: 1px solid rgba(232,200,140,0.3);
-          padding: 0.3rem 0.9rem; border-radius: 100px; margin-bottom: 1.5rem;
+        .cover-content {
+          max-width: 480px; text-align: left; z-index: 2;
+          transition: opacity 0.4s ease, transform 0.4s ease;
         }
+        .cover-content.fading { opacity: 0; transform: translateX(-30px); }
         .cover-title {
           font-family: var(--font-serif); font-weight: 900;
           font-size: 4.2rem; color: #F4ECD8; line-height: 1.1;
@@ -140,73 +197,211 @@ export default function Cover() {
           font-size: 0.92rem; color: rgba(244,236,216,0.6);
           line-height: 1.9; margin-bottom: 2rem;
         }
-        .cover-cta { display: flex; gap: 0.8rem; justify-content: center; margin-bottom: 2rem; }
+        .cover-cta { display: flex; gap: 0.8rem; margin-bottom: 2rem; }
         .cover-cta-main { padding: 0.75rem 1.8rem; font-size: 0.95rem; }
-        .cover-tags { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+        .cover-cta-main:disabled { opacity: 0.6; cursor: not-allowed; }
+        .cover-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
         .cover-tags span {
           font-size: 0.75rem; color: rgba(244,236,216,0.7);
           background: rgba(255,255,255,0.08); padding: 0.3rem 0.8rem;
           border-radius: 100px; border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* 3D 书本预览装饰 */
-        .cover-book-preview {
-          position: absolute; right: 8%; top: 50%; transform: translateY(-50%);
-          z-index: 1; pointer-events: none;
+        /* ===== 3D 线装本舞台 ===== */
+        .cover-book-stage {
+          position: relative; z-index: 3;
+          perspective: 1600px; perspective-origin: 50% 40%;
+          cursor: pointer;
         }
-        .floating-book {
-          display: flex; perspective: 1200px;
-          animation: floatBook 6s ease-in-out infinite;
+        .book-3d {
+          position: relative; width: 220px; height: 300px;
+          transform-style: preserve-3d;
+          transform: rotateY(-12deg) rotateX(4deg);
+          transition: transform 0.8s ease;
+          animation: bookFloat 6s ease-in-out infinite;
         }
-        @keyframes floatBook {
-          0%, 100% { transform: translateY(0) rotateY(-8deg); }
-          50% { transform: translateY(-15px) rotateY(-4deg); }
+        @keyframes bookFloat {
+          0%, 100% { transform: rotateY(-12deg) rotateX(4deg) translateY(0); }
+          50% { transform: rotateY(-8deg) rotateX(2deg) translateY(-12px); }
         }
-        .book-spine {
-          width: 14px; align-self: stretch;
-          background: linear-gradient(90deg, #5C3A1E, #3A2518, #5C3A1E);
+        .cover-book-stage.opening .book-3d {
+          animation: none;
+          transform: rotateY(-6deg) rotateX(2deg) translateY(-6px);
+        }
+
+        /* 书脊（左侧立柱） */
+        .book-spine-3d {
+          position: absolute; left: -14px; top: 0; bottom: 0; width: 14px;
+          background: linear-gradient(90deg, #3A2518 0%, #5C3A1E 40%, #2A1810 100%);
           border-radius: 2px 0 0 2px;
-          box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+          box-shadow: -3px 0 12px rgba(0,0,0,0.5);
+          transform: translateZ(-0.5px);
         }
-        .book-page {
-          width: 180px; height: 240px;
-          background: linear-gradient(135deg, #F4ECD8, #E8DCC0);
-          padding: 1.5rem 1.2rem; position: relative;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+
+        /* 书页厚度（右侧切口） */
+        .book-pages-edge {
+          position: absolute; right: -8px; top: 4px; bottom: 4px; width: 8px;
+          background: linear-gradient(90deg, #EDE3CC, #D8CBA8, #EDE3CC);
+          border-radius: 0 2px 2px 0;
+          box-shadow: 2px 0 6px rgba(0,0,0,0.2);
+          overflow: hidden;
         }
-        .book-page-left { border-radius: 0 2px 2px 0; }
-        .book-page-right { border-radius: 2px 4px 4px 2px; }
-        .book-line {
-          height: 2px; background: rgba(74,63,54,0.25); margin-bottom: 0.7rem;
-          border-radius: 1px;
+        .page-layer {
+          position: absolute; top: 0; bottom: 0; width: 1px;
+          background: rgba(74,63,54,0.18);
         }
-        .book-line.short { width: 60%; }
-        .book-seal {
-          position: absolute; bottom: 1.2rem; right: 1.2rem;
-          width: 28px; height: 28px; background: #C75B2A; border-radius: 4px;
-          opacity: 0.7;
+
+        /* 内页（翻开封面后露出，预先铺在封面后面） */
+        .book-inside {
+          position: absolute; inset: 0;
+          display: flex; gap: 2px;
+          background: linear-gradient(135deg, #F4ECD8 0%, #EDE3CC 50%, #E8DCC0 100%);
+          border-radius: 2px;
+          box-shadow: inset 0 0 20px rgba(139,69,19,0.08);
+          transform: translateZ(-1px);
         }
-        .book-illustration {
-          position: absolute; inset: 1.5rem;
-          border: 1px solid rgba(139,69,19,0.2); border-radius: 4px;
+        .inside-left, .inside-right {
+          flex: 1; position: relative; padding: 1.4rem 1rem;
+          display: flex; flex-direction: column; align-items: center;
+        }
+        .inside-titlepage { margin-top: 2.5rem; text-align: center; }
+        .inside-title {
+          font-family: var(--font-serif); font-weight: 700;
+          font-size: 1.3rem; color: #2A231E; letter-spacing: 0.2em;
+        }
+        .inside-author {
+          font-family: var(--font-serif); font-size: 0.7rem;
+          color: #5C3A1E; margin-top: 0.6rem; letter-spacing: 0.1em;
+        }
+        .inside-seal {
+          margin-top: 1.5rem; width: 28px; height: 28px;
+          background: #C75B2A; color: #fff;
+          display: flex; align-items: center; justify-content: center;
+          font-family: var(--font-serif); font-size: 0.6rem; border-radius: 3px;
+        }
+        .inside-mark {
+          font-family: var(--font-serif); font-size: 0.7rem;
+          color: #8B4513; letter-spacing: 0.3em; margin-bottom: 1rem;
+        }
+        .inside-toc {
+          display: flex; flex-direction: column; gap: 0.5rem;
+        }
+        .inside-toc span {
+          font-family: var(--font-serif); font-size: 0.6rem;
+          color: #5C3A1E; letter-spacing: 0.15em; text-align: center;
+          border-bottom: 1px solid rgba(139,69,19,0.15); padding-bottom: 0.3rem;
+        }
+
+        /* 封面（可翻动的最外层） */
+        .book-cover {
+          position: absolute; inset: 0;
+          transform-origin: left center;
+          transform-style: preserve-3d;
+          transition: transform 1.6s cubic-bezier(0.45, 0.05, 0.3, 1);
+          transform: translateZ(2px);
+          z-index: 5;
+        }
+        .cover-book-stage.opening .book-cover {
+          transform: translateZ(2px) rotateY(-168deg);
+        }
+        .cover-face {
+          position: absolute; inset: 0;
+          backface-visibility: hidden;
+          border-radius: 2px 4px 4px 2px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
+        }
+        /* 封面正面：深蓝布面线装本 */
+        .cover-front {
           background:
-            radial-gradient(circle at 50% 50%, rgba(139,69,19,0.12) 0%, transparent 60%),
-            repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 8px, rgba(139,69,19,0.06) 8px, rgba(139,69,19,0.06) 9px);
+            linear-gradient(135deg, #3A4A5C 0%, #2C3A48 50%, #1E2832 100%);
+          display: flex; align-items: center; justify-content: center;
+        }
+        /* 封面题签框 */
+        .cover-border-frame {
+          position: relative; width: 70%; height: 78%;
+          border: 1.5px solid rgba(232,200,140,0.4);
+          border-radius: 2px;
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          background:
+            radial-gradient(circle at 50% 30%, rgba(232,200,140,0.06) 0%, transparent 60%);
+        }
+        .cover-border-frame::before {
+          content: ''; position: absolute; inset: 4px;
+          border: 0.5px solid rgba(232,200,140,0.2);
+          border-radius: 1px; pointer-events: none;
+        }
+        .cover-tie-label {
+          display: flex; flex-direction: column; gap: 0.3rem;
+          margin-bottom: 1rem;
+        }
+        .tie-line {
+          font-family: var(--font-serif); font-weight: 700;
+          font-size: 1.6rem; color: #E8C88C;
+          letter-spacing: 0; text-align: center;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        }
+        .cover-author {
+          font-family: var(--font-serif); font-size: 0.6rem;
+          color: rgba(232,200,140,0.6); letter-spacing: 0.15em;
+        }
+        .cover-seal {
+          position: absolute; bottom: 0.4rem; right: 0.4rem;
+          width: 26px; height: 26px; background: #C75B2A;
+          color: #fff; display: flex; align-items: center; justify-content: center;
+          font-family: var(--font-serif); font-weight: 700; font-size: 0.85rem;
+          border-radius: 2px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+        /* 线装洞（封面左侧装订线） */
+        .binding-holes-cover {
+          position: absolute; left: 8px; top: 0; bottom: 0;
+          display: flex; flex-direction: column; justify-content: space-around;
+          padding: 1.5rem 0;
+        }
+        .binding-holes-cover span {
+          width: 5px; height: 5px; border-radius: 50%;
+          background: radial-gradient(circle, #1A1208 30%, #3A2518 100%);
+          box-shadow: 0 0 2px rgba(0,0,0,0.6);
+        }
+        /* 封面背面（翻开时看到的内侧扉页） */
+        .cover-back {
+          transform: rotateY(180deg);
+          background: linear-gradient(135deg, #F4ECD8, #E8DCC0);
+          display: flex; align-items: center; justify-content: center;
+        }
+        .back-mark {
+          font-family: var(--font-serif); font-size: 1.4rem;
+          color: rgba(139,69,19,0.4); letter-spacing: 0.3em;
+        }
+
+        /* 书底投影 */
+        .book-shadow-3d {
+          position: absolute; left: 50%; bottom: -28px;
+          width: 200px; height: 24px;
+          transform: translateX(-50%);
+          background: radial-gradient(ellipse, rgba(0,0,0,0.45) 0%, transparent 70%);
+          filter: blur(10px);
+          z-index: -1;
         }
 
         .cover-footer {
           position: relative; z-index: 5;
           text-align: center; padding: 1.5rem;
-          color: rgba(244,236,216,0.4); font-size: 0.8rem;
+          color: rgba(244,236,216,0.5); font-size: 0.82rem;
+          letter-spacing: 0.1em;
         }
-        .cover-footer .dot { margin: 0 0.6rem; }
 
         @media (max-width: 768px) {
-          .cover-book-preview { display: none; }
+          .cover-hero { flex-direction: column; gap: 1.5rem; padding: 0 1rem; }
+          .cover-content { text-align: center; max-width: 100%; }
+          .cover-cta { justify-content: center; }
+          .cover-tags { justify-content: center; }
           .cover-title { font-size: 2.8rem; }
           .cover-title-sub { font-size: 1.1rem; }
           .cover-desc { font-size: 0.85rem; }
           .nav-links button { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
+          .book-3d { width: 180px; height: 245px; }
+          .tie-line { font-size: 1.3rem; }
         }
       `}</style>
     </div>
