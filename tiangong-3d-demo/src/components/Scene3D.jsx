@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Html, Float, Environment, ContactShadows } from '@react-three/drei'
+import { OrbitControls, Html, Float, ContactShadows } from '@react-three/drei'
 import * as THREE from 'three'
 import { useStore } from '../store/useStore.js'
 import Tongche from './models/Tongche.jsx'
@@ -73,17 +73,18 @@ export default function Scene3D({ artifact }) {
     >
       <CameraRig viewPreset={viewPreset} />
 
-      {/* 环境光照 IBL —— 木料受光的层次来源（不画背景，只做光照） */}
-      <Environment preset="apartment" environmentIntensity={0.6} />
-
-      {/* 灯光：主光塑造体积 + 暖色补光压暗部 */}
-      <ambientLight intensity={0.25} />
+      {/* 灯光：纯本地灯光（去掉 drei Environment，避免从 githubusercontent 加载 HDR，确保国内可访问）
+          主光塑造体积 + 暖色补光压暗部 + 半球光提供环境层次 */}
+      <hemisphereLight intensity={0.5} color="#FFF1D6" groundColor="#3A2518" />
+      <ambientLight intensity={0.3} />
       <directionalLight
         position={[3, 6, 4]}
-        intensity={1.0}
+        intensity={1.2}
         color="#FFF1D6"
       />
-      <directionalLight position={[-3, 2, -2]} intensity={0.25} color="#E8C88C" />
+      <directionalLight position={[-3, 2, -2]} intensity={0.35} color="#E8C88C" />
+      {/* 后侧补光，避免背面纯黑 */}
+      <directionalLight position={[0, 3, -5]} intensity={0.25} color="#C9A578" />
 
       {/* 浮空效果 —— 轻微上下呼吸；外层缩放适配视野，避免模型超出可视范围 */}
       <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.3} floatingRange={[-0.06, 0.06]}>
