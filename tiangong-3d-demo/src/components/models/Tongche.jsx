@@ -720,10 +720,10 @@ function TubePourWater({ wheelRef, speed }) {
   // 导流槽接水处：导流槽group在[0, radius-0.9, 1.3]=[0, 0.8, 1.3]，主槽近端在局部z=-0.8，接水处在世界z≈1.3-0.8*cos(0.22)≈0.52
   // 简化：水柱从[0, 1.6, 0.3]流到[0, 0.9, 0.6]
   const startX = 0
-  const startY = 1.6
+  const startY = 1.80
   const startZ = 0.3
   const endY = 0.9
-  const endZ = 0.6
+  const endZ = 0.8
 
   const positions = useMemo(() => {
     const arr = new Float32Array(count * 3)
