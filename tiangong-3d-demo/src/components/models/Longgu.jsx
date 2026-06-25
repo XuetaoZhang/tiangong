@@ -140,6 +140,7 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
   }
 
   return (
+    <>
     <group rotation={[tilt, 0, 0]} position={[0, 0.4, 0]}>
       {/* ===== 水槽主体（斜置木槽，如原版长条形水槽） ===== */}
       <group position={[0, 0, explode ? 0.5 : 0]}>
@@ -400,16 +401,9 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
         </group>
       </group>
 
-      {/* ===== 水面（底部，半透明蓝，从动轮浸入水中） ===== */}
-      <mesh position={[0, -0.4, -troughLen / 2 - 0.7]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[3.5, 2.5]} />
-        <meshStandardMaterial color="#4A7A9A" transparent opacity={0.4} roughness={0.3} />
-      </mesh>
-      {/* 水体（水面以下实体水） */}
-      <mesh position={[0, -1.2, -troughLen / 2 - 0.7]}>
-        <boxGeometry args={[3.5, 1.5, 2.5]} />
-        <meshStandardMaterial color="#3A6A8A" transparent opacity={0.3} roughness={0.2} metalness={0.1} />
-      </mesh>
+      {/* ===== 水面（移到group外，水平不倾斜，从动轮1/2没入水中） ===== */}
+      {/* 从动轮中心世界y≈-0.43，轮半径0.22，水面设在y=-0.54让轮下半没入 */}
+      {/* 水面已移到group外 */}
 
       {/* ===== 出水口（水槽高端出水，流入田地） ===== */}
       <group position={[0, 0.3, troughLen / 2 + 0.1]}>
@@ -429,6 +423,20 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
       {/* 水流粒子（模拟时显示，在底部水中流动） */}
       {simSpeed > 0 && <LongguWater speed={simSpeed} troughLen={troughLen} />}
     </group>
+
+    {/* ===== 水面+水体（水平，不随龙骨倾斜，从动轮1/2没入水中） ===== */}
+    {/* 从动轮中心世界y≈-0.43，轮半径0.22，水面设在y=-0.43让轮1/2没入 */}
+    {/* 水面（水平半透明蓝plane） */}
+    <mesh position={[0, -0.43, -3.0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[4.0, 3.0]} />
+      <meshStandardMaterial color="#4A7A9A" transparent opacity={0.5} roughness={0.3} />
+    </mesh>
+    {/* 水体（水面以下实体水，水平） */}
+    <mesh position={[0, -1.3, -3.0]}>
+      <boxGeometry args={[4.0, 1.6, 3.0]} />
+      <meshStandardMaterial color="#3A6A8A" transparent opacity={0.35} roughness={0.2} metalness={0.1} />
+    </mesh>
+    </>
   )
 }
 
