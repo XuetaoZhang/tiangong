@@ -5,17 +5,6 @@ export default function About() {
   const go = useStore((s) => s.go)
   return (
     <div className="about-page">
-      <nav className="top-nav about-nav">
-        <div className="logo" onClick={() => go('cover')}>
-          <span className="logo-seal">天</span>
-          <span className="logo-text">天工开物·3D 书</span>
-        </div>
-        <div className="nav-links">
-          <button onClick={() => go('cover')}>首页</button>
-          <button onClick={() => go('catalog')}>目录</button>
-          <button onClick={() => go('settings')}>设置</button>
-        </div>
-      </nav>
 
       <div className="about-body">
         <button className="back-btn" onClick={() => go('cover')}>← 返回</button>
@@ -29,19 +18,8 @@ export default function About() {
           <h3>核心理念：书中有物，物在书上</h3>
           <p>3D 器物不是独立窗口，而是从书页中"浮现"，与古文深度关联。悬停古文，器物部件同步高亮；点击器物，古文滚动定位，形成闭环。</p>
 
-          <h3>技术栈</h3>
-          <ul>
-            <li>React + Vite 前端框架</li>
-            <li>React Three Fiber + Three.js 3D 渲染</li>
-            <li>AI 大模型（古文翻译 / 部件释义 / 智能问答）</li>
-            <li>Zustand 状态管理</li>
-          </ul>
-
           <h3>内容来源</h3>
           <p>《天工开物》（明·宋应星）公有领域版本。3D 模型基于程序化几何构建，AI 讲解内容基于古籍原文整理。</p>
-
-          <h3>赛事</h3>
-          <p>TRAE AI 创造力大赛参赛作品。</p>
 
           <div className="about-quote">
             "天工开物，盖言人巧乃天之工所开也。"

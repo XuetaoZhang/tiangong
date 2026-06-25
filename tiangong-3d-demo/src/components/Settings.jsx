@@ -7,17 +7,6 @@ export default function Settings() {
 
   return (
     <div className="settings-page">
-      <nav className="top-nav settings-nav">
-        <div className="logo" onClick={() => go('cover')}>
-          <span className="logo-seal">天</span>
-          <span className="logo-text">天工开物·3D 书</span>
-        </div>
-        <div className="nav-links">
-          <button onClick={() => go('cover')}>首页</button>
-          <button onClick={() => go('catalog')}>目录</button>
-          <button onClick={() => go('about')}>关于</button>
-        </div>
-      </nav>
 
       <div className="settings-body">
         <button className="back-btn" onClick={() => go('cover')}>← 返回</button>
@@ -65,7 +54,6 @@ export default function Settings() {
         </Section>
 
         <Section title="关于">
-          <div className="about-line">版本 v1.0 · TRAE AI 创造力大赛作品</div>
           <div className="about-line muted">《天工开物》内容基于公有领域版本整理</div>
         </Section>
       </div>
