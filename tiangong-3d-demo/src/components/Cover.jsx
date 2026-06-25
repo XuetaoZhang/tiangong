@@ -1,6 +1,50 @@
 import React, { useState, useRef } from 'react'
 import { useStore } from '../store/useStore.js'
 
+// 与目录页一致的目录数据（卷之上/卷之下 + 篇章 + 篇目页码）
+const tocData = [
+  {
+    juan: '卷之上',
+    chapters: [
+      {
+        name: '乃粒',
+        sub: '农具·水利',
+        items: [
+          { id: 'tongche', name: '筒车', page: '一' },
+          { id: 'longgu', name: '龙骨水车', page: '三' },
+          { id: 'shuidui', name: '水碓', page: '七', soon: true },
+        ],
+      },
+      {
+        name: '乃服',
+        sub: '纺织·织造',
+        items: [
+          { id: 'fangzhi', name: '纺织机', page: '九', soon: true },
+        ],
+      },
+    ],
+  },
+  {
+    juan: '卷之下',
+    chapters: [
+      {
+        name: '治铸',
+        sub: '铸造·冶铁',
+        items: [
+          { id: 'gufeng', name: '鼓风炉', page: '十三', soon: true },
+        ],
+      },
+      {
+        name: '杀青',
+        sub: '造纸·印刷',
+        items: [
+          { id: 'huozi', name: '活字印刷', page: '十五', soon: true },
+        ],
+      },
+    ],
+  },
+]
+
 export default function Cover() {
   const go = useStore((s) => s.go)
   // 阶段：idle=合上 | opening=封面翻开 | expanding=放大到大书形态 | done
@@ -84,26 +128,29 @@ export default function Cover() {
               ))}
             </div>
 
-            {/* 内页（翻开封面后露出的目录页，预先铺好） */}
+            {/* 内页（翻开封面后露出，书脊右侧）= 目录页 book-right 目录正文，整页都是目录正文 */}
             <div className="book-inside">
-              <div className="inside-left">
-                <div className="inside-titlepage">
-                  <div className="inside-title">天工開物</div>
-                  <div className="inside-author">明 宋應星 著</div>
-                  <div className="inside-seal">卷之上</div>
-                </div>
-                <div className="binding-holes-cover">
-                  <span /><span /><span /><span />
-                </div>
-              </div>
-              <div className="inside-right">
-                <div className="inside-mark">目　錄</div>
-                <div className="inside-toc">
-                  <span>乃粒　水利</span>
-                  <span>乃服　纺织</span>
-                  <span>治铸　铸造</span>
-                  <span>杀青　造纸</span>
-                </div>
+              <div className="catalog-header-mark">目　錄</div>
+              <div className="catalog-vertical">
+                {tocData.map((juan) => (
+                  <div className="toc-juan" key={juan.juan}>
+                    <div className="toc-juan-title">{juan.juan}</div>
+                    {juan.chapters.map((ch) => (
+                      <div className="toc-chapter" key={ch.name}>
+                        <div className="toc-ch-name">{ch.name}</div>
+                        {ch.items.map((item) => (
+                          <div
+                            key={item.id}
+                            className={`toc-item ${item.soon ? 'soon' : ''}`}
+                          >
+                            {item.name}　{item.page}
+                            {item.soon && <span className="toc-soon-tag">未刊</span>}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -125,9 +172,16 @@ export default function Cover() {
                   <span /><span /><span /><span />
                 </div>
               </div>
-              {/* 封面背面（翻开过程中看到的内侧） */}
+              {/* 封面背面（翻开后面向读者，书脊左侧）= 目录页 book-left 书名页 */}
               <div className="cover-face cover-back">
-                <div className="back-mark">序</div>
+                <div className="catalog-titlepage">
+                  <div className="title-seal">天</div>
+                  <h1 className="title-main">天工開物</h1>
+                  <p className="title-sub">宋應星 著</p>
+                  <div className="title-rule" />
+                  <p className="title-quote">「天覆地載，物數號萬，而事亦因之。」</p>
+                  <p className="title-quote-en">物成於天，工存於人</p>
+                </div>
               </div>
             </div>
 
@@ -287,45 +341,51 @@ export default function Cover() {
           background: rgba(74,63,54,0.18);
         }
 
-        /* 内页（翻开封面后露出，预先铺在封面后面） */
+        /* 内页（翻开封面后露出，书脊右侧）= 目录页 book-right 目录正文，整页目录正文不分栏 */
         .book-inside {
           position: absolute; inset: 0;
-          display: flex; gap: 2px;
+          display: flex; flex-direction: column;
           background: linear-gradient(135deg, #F4ECD8 0%, #EDE3CC 50%, #E8DCC0 100%);
           border-radius: 2px;
           box-shadow: inset 0 0 20px rgba(139,69,19,0.08);
           transform: translateZ(-1px);
+          padding: 0.6rem 0.5rem;
+          overflow: hidden;
         }
-        .inside-left, .inside-right {
-          flex: 1; position: relative; padding: 1.4rem 1rem;
-          display: flex; flex-direction: column; align-items: center;
+        /* 目录正文样式（复刻目录页 catalog-right） */
+        .book-inside .catalog-header-mark {
+          font-family: var(--font-serif); font-size: 0.55rem; color: #C75B2A;
+          letter-spacing: 0.3em; text-align: center; padding-bottom: 0.4rem;
+          border-bottom: 1px solid rgba(139,69,19,0.2); margin-bottom: 0.4rem;
+          position: relative; z-index: 5;
         }
-        .inside-titlepage { margin-top: 2.5rem; text-align: center; }
-        .inside-title {
-          font-family: var(--font-serif); font-weight: 700;
-          font-size: 1.3rem; color: #2A231E; letter-spacing: 0.2em;
+        .book-inside .catalog-vertical {
+          flex: 1; position: relative; z-index: 6;
+          writing-mode: vertical-rl;
+          display: flex; flex-direction: column; gap: 0.3rem;
+          padding: 0.2rem; overflow: hidden;
+          font-family: var(--font-serif);
         }
-        .inside-author {
-          font-family: var(--font-serif); font-size: 0.7rem;
-          color: #5C3A1E; margin-top: 0.6rem; letter-spacing: 0.1em;
+        .book-inside .toc-juan { display: block; }
+        .book-inside .toc-juan-title {
+          display: block; font-size: 0.6rem; font-weight: 700; color: #C75B2A;
+          letter-spacing: 0.2em; margin-bottom: 0.3rem; padding: 0.1rem 0;
+          border-bottom: 1px solid rgba(199,91,42,0.3);
         }
-        .inside-seal {
-          margin-top: 1.5rem; width: 28px; height: 28px;
-          background: #C75B2A; color: #fff;
-          display: flex; align-items: center; justify-content: center;
-          font-family: var(--font-serif); font-size: 0.6rem; border-radius: 3px;
+        .book-inside .toc-chapter { display: block; margin-bottom: 0.2rem; }
+        .book-inside .toc-ch-name {
+          display: block; font-size: 0.55rem; font-weight: 600; color: #2A231E;
+          letter-spacing: 0.15em; margin-bottom: 0.2rem;
         }
-        .inside-mark {
-          font-family: var(--font-serif); font-size: 0.7rem;
-          color: #8B4513; letter-spacing: 0.3em; margin-bottom: 1rem;
+        .book-inside .toc-item {
+          display: block; padding: 0.1rem 0.2rem; margin: 0 0 0.15rem 0;
+          font-family: var(--font-serif); font-size: 0.5rem;
+          color: #2A231E; opacity: 0.85;
         }
-        .inside-toc {
-          display: flex; flex-direction: column; gap: 0.5rem;
-        }
-        .inside-toc span {
-          font-family: var(--font-serif); font-size: 0.6rem;
-          color: #5C3A1E; letter-spacing: 0.15em; text-align: center;
-          border-bottom: 1px solid rgba(139,69,19,0.15); padding-bottom: 0.3rem;
+        .book-inside .toc-item.soon { opacity: 0.45; }
+        .book-inside .toc-soon-tag {
+          font-size: 0.36rem; color: #E65100; background: #FFF3E0;
+          padding: 0.05rem 0.2rem; border-radius: 2px; margin-left: 0.2rem;
         }
 
         /* 封面（可翻动的最外层） */
@@ -402,14 +462,41 @@ export default function Cover() {
           box-shadow: 0 0 2px rgba(0,0,0,0.6);
         }
         /* 封面背面（翻开时看到的内侧扉页） */
+        /* 封面背面 = 目录页 book-left 书名页（翻开后面向读者，书脊左侧） */
         .cover-back {
           transform: rotateY(180deg);
           background: linear-gradient(135deg, #F4ECD8, #E8DCC0);
-          display: flex; align-items: center; justify-content: center;
+          display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+          padding: 0.6rem 0.5rem;
+          overflow: hidden;
         }
-        .back-mark {
-          font-family: var(--font-serif); font-size: 1.4rem;
-          color: rgba(139,69,19,0.4); letter-spacing: 0.3em;
+        .cover-back .catalog-titlepage { text-align: center; position: relative; z-index: 5; margin-top: 0.3rem; }
+        .cover-back .title-seal {
+          width: 24px; height: 24px; margin: 0 auto 0.5rem;
+          background: #C75B2A; color: #fff;
+          font-family: var(--font-serif); font-size: 0.85rem; font-weight: 700;
+          display: flex; align-items: center; justify-content: center;
+          border-radius: 4px; box-shadow: 0 2px 6px rgba(199,91,42,0.4);
+        }
+        .cover-back .title-main {
+          font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700;
+          color: #2A231E; letter-spacing: 0.2em; margin: 0 auto 0.4rem;
+          writing-mode: vertical-rl; line-height: 1.4;
+        }
+        .cover-back .title-sub {
+          font-family: var(--font-serif); font-size: 0.55rem;
+          color: #5C3A1E; letter-spacing: 0.15em; margin-bottom: 0.6rem;
+        }
+        .cover-back .title-rule {
+          width: 28px; height: 1px; background: #C75B2A; margin: 0 auto 0.5rem; opacity: 0.6;
+        }
+        .cover-back .title-quote {
+          font-family: var(--font-serif); font-size: 0.5rem;
+          color: #5C3A1E; line-height: 1.7; margin-bottom: 0.2rem;
+        }
+        .cover-back .title-quote-en {
+          font-family: var(--font-serif); font-size: 0.42rem;
+          color: rgba(139,69,19,0.5); letter-spacing: 0.1em;
         }
 
         /* 书底投影 */
