@@ -516,6 +516,12 @@ export default function Tongche({ highlightedPartId, explode, simSpeed, onSelect
         >
           <boxGeometry args={[0.7, 0.08, 0.3]} />
         </mesh>
+        {/* 过渡段水流（连接主槽水流和尾槽水流，确保水流连续不断） */}
+        {simSpeed > 0 && (
+          <group position={[0, 0.10, 0.81]} rotation={[0.15, 0, 0]}>
+            <TroughWater width={0.6} length={0.13} position={[0, 0, 0]} speed={simSpeed} />
+          </group>
+        )}
         {/* 水槽底部斜撑木（托举水槽，从立柱顶部连接到水槽） */}
         <mesh material={woodMat('trough', '#5C3A1E')} castShadow position={[0.25, -0.6, 0.4]} rotation={[1.1, 0, 0]}>
           <boxGeometry args={[0.14, 1.4, 0.14]} />
@@ -690,7 +696,7 @@ function TroughWater({ width, length, position, speed }) {
   // 流动动画（纹理offset沿长度方向移动）
   useFrame((_, delta) => {
     if (matRef.current) {
-      matRef.current.map.offset.y -= delta * (speed / 50) * 0.5
+      matRef.current.map.offset.y += delta * (speed / 50) * 0.5
     }
   })
 
