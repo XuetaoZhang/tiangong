@@ -466,7 +466,7 @@ export default function Cover() {
         .cover-back {
           transform: rotateY(180deg);
           background: linear-gradient(135deg, #F4ECD8, #E8DCC0);
-          display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+          display: flex; flex-direction: column; align-items: center; justify-content: space-around;
           padding: 0.6rem 0.5rem;
           overflow: hidden;
         }
