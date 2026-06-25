@@ -9,6 +9,13 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
   const pedalRef = useRef()
   const bottomWheelRef = useRef()
   const chainGroupRef = useRef()
+  // 人腿关节 ref（左右各髋/膝/踝三关节，做踩踏动画）
+  const leftHipRef = useRef()
+  const leftKneeRef = useRef()
+  const leftAnkleRef = useRef()
+  const rightHipRef = useRef()
+  const rightKneeRef = useRef()
+  const rightAnkleRef = useRef()
 
   // 整体倾斜角度（约 -25°，低端在水中，高端在岸上，如原版插图）
   const tilt = -0.44
@@ -33,6 +40,25 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
             updateLinkPosition(child, userData.t, troughLen)
           }
         })
+      }
+      // 人腿踩踏动画（髋/膝/踝三关节联动，与踏轴转动同步，左右脚交替）
+      if (leftHipRef.current && pedalRef.current) {
+        // 用踏轴当前转角作为相位（与踏板位置严格同步）
+        const angle = pedalRef.current.rotation.x
+        // 左脚相位：踩在对置踏板上，踏板在最低点时脚踩下去（伸直），最高点时抬起来（弯曲）
+        const lp = Math.sin(angle)
+        // 右脚相位（反相，踩在对面踏板上）
+        const rp = Math.sin(angle + Math.PI)
+        // 髋关节：大腿前后摆动（基础前倾0.35 + 摆动±0.3）
+        leftHipRef.current.rotation.x = 0.35 + lp * 0.3
+        rightHipRef.current.rotation.x = 0.35 + rp * 0.3
+        // 膝关节：脚在最高点(lp=1)时膝盖弯曲最多，脚在最低点(lp=-1)踩下去时腿伸直
+        // 弯曲量 = (1 - lp) / 2 * 0.7 + 0.15（基础微弯）
+        leftKneeRef.current.rotation.x = (1 - lp) * 0.35 + 0.15
+        rightKneeRef.current.rotation.x = (1 - rp) * 0.35 + 0.15
+        // 踝关节：足部随踩踏上下点动，踩下去时脚尖下压
+        leftAnkleRef.current.rotation.x = -lp * 0.25
+        rightAnkleRef.current.rotation.x = -rp * 0.25
       }
     }
   })
@@ -259,29 +285,32 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
               </mesh>
             )
           })}
-          {/* 踏板（拐木，4组对置，绕X轴旋转，与轴转动方向一致，人踩踏） */}
-          {[0, Math.PI / 2, Math.PI, Math.PI * 1.5].map((a, i) => (
-            <group key={`pedal-${i}`} rotation={[a, 0, 0]}>
-              {/* 踏板前（+Z侧） */}
-              <mesh
-                material={woodMat('pedal', '#7B4F2E')}
-                castShadow
-                position={[0, 0.52, 0.35]}
-                onClick={(e) => { e.stopPropagation(); onSelectPart('pedal') }}
-              >
-                <boxGeometry args={[0.5, 0.05, 0.16]} />
-              </mesh>
-              {/* 踏板后（-Z侧） */}
-              <mesh
-                material={woodMat('pedal', '#7B4F2E')}
-                castShadow
-                position={[0, 0.52, -0.35]}
-                onClick={(e) => { e.stopPropagation(); onSelectPart('pedal') }}
-              >
-                <boxGeometry args={[0.5, 0.05, 0.16]} />
-              </mesh>
-            </group>
-          ))}
+          {/* 踏板+拐木（4组对置，绕X轴旋转，沿主轴长度方向错开排列，拐木从主轴中心径向延伸连接踏板） */}
+          {[0, Math.PI / 2, Math.PI, Math.PI * 1.5].map((a, i) => {
+            // 4组踏板沿主轴长度方向(X)错开，避免重叠，且都在主轴(长0.85)范围内
+            const xPos = -0.3 + i * 0.2
+            return (
+              <group key={`pedal-${i}`} rotation={[a, 0, 0]}>
+                {/* 拐木（曲柄，从主轴中心 y=0 径向延伸到踏板 y=0.42，穿过主轴表面牢牢连接） */}
+                <mesh
+                  material={woodMat('pedal', '#5C3A1E')}
+                  castShadow
+                  position={[xPos, 0.21, 0]}
+                >
+                  <boxGeometry args={[0.09, 0.42, 0.09]} />
+                </mesh>
+                {/* 踏板（拐木末端，人踩的脚踏板） */}
+                <mesh
+                  material={woodMat('pedal', '#7B4F2E')}
+                  castShadow
+                  position={[xPos, 0.44, 0]}
+                  onClick={(e) => { e.stopPropagation(); onSelectPart('pedal') }}
+                >
+                  <boxGeometry args={[0.28, 0.05, 0.18]} />
+                </mesh>
+              </group>
+            )
+          })}
         </group>
 
         {/* 踏轴支架（左右木架，支撑踏轴） */}
@@ -321,16 +350,54 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
             <coneGeometry args={[0.2, 0.3, 8]} />
             <meshStandardMaterial color="#7B4F2E" roughness={0.8} />
           </mesh>
-          {/* 左腿（踩踏姿势，弯曲） */}
-          <mesh castShadow position={[-0.1, -0.3, 0.1]} rotation={[0.5, 0, 0]}>
-            <cylinderGeometry args={[0.06, 0.055, 0.45, 8]} />
-            <meshStandardMaterial color="#5C3A1E" roughness={0.8} />
-          </mesh>
-          {/* 右腿 */}
-          <mesh castShadow position={[0.1, -0.3, 0.1]} rotation={[0.5, 0, 0]}>
-            <cylinderGeometry args={[0.06, 0.055, 0.45, 8]} />
-            <meshStandardMaterial color="#5C3A1E" roughness={0.8} />
-          </mesh>
+          {/* 左腿（髋/膝/踝三关节，踩踏动画） */}
+          <group ref={leftHipRef} position={[-0.1, -0.15, 0.05]}>
+            {/* 大腿 */}
+            <mesh position={[0, -0.1, 0]} castShadow>
+              <cylinderGeometry args={[0.07, 0.06, 0.2, 8]} />
+              <meshStandardMaterial color="#5C3A1E" roughness={0.8} />
+            </mesh>
+            {/* 膝关节 */}
+            <group ref={leftKneeRef} position={[0, -0.2, 0]}>
+              {/* 小腿 */}
+              <mesh position={[0, -0.1, 0]} castShadow>
+                <cylinderGeometry args={[0.06, 0.05, 0.2, 8]} />
+                <meshStandardMaterial color="#5C3A1E" roughness={0.8} />
+              </mesh>
+              {/* 踝关节 */}
+              <group ref={leftAnkleRef} position={[0, -0.2, 0]}>
+                {/* 足部（脚掌） */}
+                <mesh position={[0, -0.025, 0.05]} castShadow>
+                  <boxGeometry args={[0.09, 0.05, 0.18]} />
+                  <meshStandardMaterial color="#3A2518" roughness={0.8} />
+                </mesh>
+              </group>
+            </group>
+          </group>
+          {/* 右腿（髋/膝/踝三关节，踩踏动画，与左腿反相） */}
+          <group ref={rightHipRef} position={[0.1, -0.15, 0.05]}>
+            {/* 大腿 */}
+            <mesh position={[0, -0.1, 0]} castShadow>
+              <cylinderGeometry args={[0.07, 0.06, 0.2, 8]} />
+              <meshStandardMaterial color="#5C3A1E" roughness={0.8} />
+            </mesh>
+            {/* 膝关节 */}
+            <group ref={rightKneeRef} position={[0, -0.2, 0]}>
+              {/* 小腿 */}
+              <mesh position={[0, -0.1, 0]} castShadow>
+                <cylinderGeometry args={[0.06, 0.05, 0.2, 8]} />
+                <meshStandardMaterial color="#5C3A1E" roughness={0.8} />
+              </mesh>
+              {/* 踝关节 */}
+              <group ref={rightAnkleRef} position={[0, -0.2, 0]}>
+                {/* 足部（脚掌） */}
+                <mesh position={[0, -0.025, 0.05]} castShadow>
+                  <boxGeometry args={[0.09, 0.05, 0.18]} />
+                  <meshStandardMaterial color="#3A2518" roughness={0.8} />
+                </mesh>
+              </group>
+            </group>
+          </group>
           {/* 左臂（扶前方横架） */}
           <mesh castShadow position={[-0.15, 0.3, 0.25]} rotation={[1.4, 0, 0.2]}>
             <cylinderGeometry args={[0.05, 0.045, 0.4, 8]} />
