@@ -171,7 +171,7 @@ export const artifacts = {
         id: 'pedal',
         name: '踏轴',
         position: [0, 0, 0],
-        hotspot: [1.6, 0.7, 0],
+        hotspot: [0.5, 0.95, 1.1],
         explanation: {
           student: '踏轴像自行车的脚踏板，人踩上去转圈，水车就动起来了。',
           standard: '踏轴是龙骨水车的动力输入部件，位于水车顶部。踩踏者踩动踏板带动主轴旋转，将人力转化为链条运动的动力。',
@@ -184,7 +184,7 @@ export const artifacts = {
         id: 'chain',
         name: '龙骨链',
         position: [0, 0, 0],
-        hotspot: [0, -0.2, 0.8],
+        hotspot: [0.4, 0.36, 0.1],
         explanation: {
           student: '龙骨链像自行车的链条，把踩踏的力量传到刮板上。',
           standard: '龙骨链是龙骨水车的传动部件，由一连串木制链节用销轴连接而成，因形似龙骨得名。它将踏轴的动力传递到刮板。',
@@ -197,7 +197,7 @@ export const artifacts = {
         id: 'blade',
         name: '刮水板',
         position: [0, 0, 0],
-        hotspot: [-1.2, -0.3, 0.6],
+        hotspot: [-0.4, 0.56, 0.2],
         explanation: {
           student: '刮水板像小铲子，把水从低处一铲一铲地刮到高处。',
           standard: '刮水板安装在龙骨链的每个链节上，随链条运动时将水槽中的水刮起并向上推送，是龙骨水车的提水工作部件。',
@@ -210,7 +210,7 @@ export const artifacts = {
         id: 'trough',
         name: '水槽',
         position: [0, 0, 0],
-        hotspot: [0, -1.2, 0],
+        hotspot: [0, 0.15, -0.3],
         explanation: {
           student: '水槽是水往上走的"滑梯"，水在槽里被刮板推着往上爬。',
           standard: '水槽是龙骨水车的主体结构，为长条形木槽，斜置于水源与田间之间。槽底铺木板，龙骨链与刮水板在槽内运动，将水刮送上升。',

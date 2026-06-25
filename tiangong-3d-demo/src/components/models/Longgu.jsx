@@ -16,6 +16,7 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
   const rightHipRef = useRef()
   const rightKneeRef = useRef()
   const rightAnkleRef = useRef()
+  const personRef = useRef()  // 人形整体（做踩踏时身体上下起伏）
 
   // 整体倾斜角度（约 -25°，低端在水中，高端在岸上，如原版插图）
   const tilt = -0.44
@@ -41,7 +42,7 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
           }
         })
       }
-      // 人腿踩踏动画（髋/膝/踝三关节联动，与踏轴转动同步，左右脚交替）
+      // 人腿踩踏动画（髋/膝/踝三关节联动 + 身体起伏，与踏轴转动同步，左右脚交替）
       if (leftHipRef.current && pedalRef.current) {
         // 用踏轴当前转角作为相位（与踏板位置严格同步）
         const angle = pedalRef.current.rotation.x
@@ -49,16 +50,22 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
         const lp = Math.sin(angle)
         // 右脚相位（反相，踩在对面踏板上）
         const rp = Math.sin(angle + Math.PI)
-        // 髋关节：大腿前后摆动（基础前倾0.35 + 摆动±0.3）
-        leftHipRef.current.rotation.x = 0.35 + lp * 0.3
-        rightHipRef.current.rotation.x = 0.35 + rp * 0.3
-        // 膝关节：脚在最高点(lp=1)时膝盖弯曲最多，脚在最低点(lp=-1)踩下去时腿伸直
-        // 弯曲量 = (1 - lp) / 2 * 0.7 + 0.15（基础微弯）
-        leftKneeRef.current.rotation.x = (1 - lp) * 0.35 + 0.15
-        rightKneeRef.current.rotation.x = (1 - rp) * 0.35 + 0.15
-        // 踝关节：足部随踩踏上下点动，踩下去时脚尖下压
-        leftAnkleRef.current.rotation.x = -lp * 0.25
-        rightAnkleRef.current.rotation.x = -rp * 0.25
+        // 身体整体上下起伏：双脚交替踩踏时重心周期性上下（每踩一下身体微降）
+        // 用 |sin| 的双倍频模拟每半圈一次踩踏冲击
+        if (personRef.current) {
+          const bob = -Math.abs(Math.sin(angle)) * 0.04
+          personRef.current.position.y = 0.8 + bob
+        }
+        // 髋关节：大腿前后摆动（基础前倾0.3 + 摆动±0.35），踩下去时大腿前送
+        leftHipRef.current.rotation.x = 0.3 + lp * 0.35
+        rightHipRef.current.rotation.x = 0.3 + rp * 0.35
+        // 膝关节：抬腿时(lp>0)弯曲多，踩下去(lp<0)时伸直，用非线性曲线更自然
+        // 弯曲量 = max(0, lp) * 0.8 + 0.1（基础微弯）
+        leftKneeRef.current.rotation.x = Math.max(0, lp) * 0.8 + 0.1
+        rightKneeRef.current.rotation.x = Math.max(0, rp) * 0.8 + 0.1
+        // 踝关节：足部随踩踏上下点动，踩下去时脚尖下压，抬起时脚尖上勾
+        leftAnkleRef.current.rotation.x = -lp * 0.3
+        rightAnkleRef.current.rotation.x = -rp * 0.3
       }
     }
   })
@@ -329,7 +336,7 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
         </mesh>
 
         {/* ===== 踩踏人形（如原版插图，站在踏轴上方，手扶横架） ===== */}
-        <group position={[0, 0.8, 0.4]}>
+        <group ref={personRef} position={[0, 0.8, 0.4]}>
           {/* 头 */}
           <mesh castShadow position={[0, 0.6, 0]}>
             <sphereGeometry args={[0.14, 12, 12]} />
@@ -340,15 +347,15 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
             <sphereGeometry args={[0.08, 8, 8]} />
             <meshStandardMaterial color="#2A1810" roughness={0.8} />
           </mesh>
-          {/* 身（略前倾，踩踏姿势） */}
+          {/* 身（略前倾，踩踏姿势，圆柱形躯干） */}
           <mesh castShadow position={[0, 0.2, 0]} rotation={[0.2, 0, 0]}>
-            <cylinderGeometry args={[0.12, 0.15, 0.65, 10]} />
+            <cylinderGeometry args={[0.13, 0.14, 0.6, 10]} />
             <meshStandardMaterial color="#8B6F3A" roughness={0.75} />
           </mesh>
-          {/* 衣服下摆 */}
-          <mesh castShadow position={[0, -0.15, 0.05]} rotation={[0.2, 0, 0]}>
-            <coneGeometry args={[0.2, 0.3, 8]} />
-            <meshStandardMaterial color="#7B4F2E" roughness={0.8} />
+          {/* 腰带（区分上下身，去掉三角形下摆） */}
+          <mesh castShadow position={[0, -0.1, 0.02]} rotation={[0.2, 0, 0]}>
+            <cylinderGeometry args={[0.145, 0.145, 0.08, 10]} />
+            <meshStandardMaterial color="#3A2518" roughness={0.7} />
           </mesh>
           {/* 左腿（髋/膝/踝三关节，踩踏动画） */}
           <group ref={leftHipRef} position={[-0.1, -0.15, 0.05]}>
@@ -489,6 +496,21 @@ export default function Longgu({ highlightedPartId, explode, simSpeed, onSelectP
 
       {/* 水流粒子（模拟时显示，在底部水中流动） */}
       {simSpeed > 0 && <LongguWater speed={simSpeed} troughLen={troughLen} />}
+    </group>
+
+    {/* ===== 陆地坡面（河岸，从踏轴支架下方延伸到水面，水平不随龙骨倾斜） ===== */}
+    {/* 高端在岸上踏轴下方 y≈0.2 z≈2.3，低端在水边 y≈-0.43 z≈-2.5 */}
+    <group position={[0, 0.03, 0.85]} rotation={[-0.28, 0, 0]}>
+      {/* 坡面主体（土黄色斜板） */}
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[2.6, 0.3, 4.8]} />
+        <meshStandardMaterial color="#8B6F3A" roughness={0.95} metalness={0} />
+      </mesh>
+      {/* 坡面表层（更深的泥土色，模拟夯土面） */}
+      <mesh position={[0, 0.16, 0]} receiveShadow>
+        <boxGeometry args={[2.6, 0.04, 4.8]} />
+        <meshStandardMaterial color="#6B4226" roughness={0.98} />
+      </mesh>
     </group>
 
     {/* ===== 水面+水体（水平，不随龙骨倾斜，从动轮1/2没入水中） ===== */}
