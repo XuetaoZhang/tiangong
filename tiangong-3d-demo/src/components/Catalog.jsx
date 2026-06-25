@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import { useStore } from '../store/useStore.js'
 import { artifacts, upcomingArtifacts } from '../data/artifacts.js'
 
@@ -49,15 +49,11 @@ const tocData = [
 export default function Catalog() {
   const go = useStore((s) => s.go)
   const openArtifact = useStore((s) => s.openArtifact)
-  const [entered, setEntered] = useState(false)
+  // 默认 entered=true，跳过入场动画（封面翻书动画已把书"放进来"，避免重复缩放）
+  const [entered, setEntered] = useState(true)
   const [flipping, setFlipping] = useState(false)
   const [flipDir, setFlipDir] = useState(0) // 1=翻开进入正文, -1=返回封面
   const flipTimer = useRef(null)
-
-  useEffect(() => {
-    const t = setTimeout(() => setEntered(true), 100)
-    return () => clearTimeout(t)
-  }, [])
 
   // 点击目录条目 → 多翻几页动画 → 进入正文
   const handleSelect = (item) => {

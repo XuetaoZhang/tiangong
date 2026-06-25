@@ -3,16 +3,23 @@ import { useStore } from '../store/useStore.js'
 
 export default function Cover() {
   const go = useStore((s) => s.go)
-  const [opening, setOpening] = useState(false)   // 是否正在播放打开动画
+  // 阶段：idle=合上 | opening=封面翻开 | expanding=放大到大书形态 | done
+  const [phase, setPhase] = useState('idle')
   const timer = useRef(null)
 
-  // 点击"开始阅读"：触发 3D 翻书动画，结束后进入目录
+  // 点击"开始阅读"：封面翻开 → 放大到目录页大书形态 → 无黑屏切入 catalog
   const handleStart = () => {
-    if (opening) return
-    setOpening(true)
+    if (phase !== 'idle') return
+    setPhase('opening')
+    // 1) 封面翻开（1.5s）
     timer.current = setTimeout(() => {
-      go('catalog')
-    }, 1700)  // 与翻页动画时长匹配
+      setPhase('expanding')
+      // 2) 放大+位移+旋转到目录页大书形态（1.2s）
+      timer.current = setTimeout(() => {
+        setPhase('done')
+        go('catalog')   // catalog 会跳过自己的入场动画直接显示
+      }, 1200)
+    }, 1500)
   }
 
   return (
@@ -33,7 +40,7 @@ export default function Cover() {
       {/* 主视觉：左文案 + 右合上的线装本 */}
       <div className="cover-hero">
         <div className="cover-bg-decoration" />
-        <div className={`cover-content fade-in-up ${opening ? 'fading' : ''}`}>
+        <div className={`cover-content fade-in-up ${phase !== 'idle' ? 'fading' : ''}`}>
           <h1 className="cover-title">
             天工开物
             <span className="cover-title-sub">· 3D 书 ·</span>
@@ -47,9 +54,9 @@ export default function Cover() {
             <button
               className="btn btn-primary cover-cta-main"
               onClick={handleStart}
-              disabled={opening}
+              disabled={phase !== 'idle'}
             >
-              {opening ? '正在翻开…' : '开启阅读 →'}
+              {phase !== 'idle' ? '正在翻开…' : '开启阅读 →'}
             </button>
           </div>
 
@@ -61,8 +68,11 @@ export default function Cover() {
           </div>
         </div>
 
-        {/* ===== 3D 线装本（合上状态，点击翻页打开） ===== */}
-        <div className={`cover-book-stage ${opening ? 'opening' : ''}`} onClick={handleStart}>
+        {/* ===== 3D 线装本（合上状态，点击翻页打开 → 放大到目录页大书形态） ===== */}
+        <div
+          className={`cover-book-stage phase-${phase}`}
+          onClick={handleStart}
+        >
           <div className="book-3d">
             {/* 书脊（左侧立柱，深色木布质感） */}
             <div className="book-spine-3d" />
@@ -212,11 +222,14 @@ export default function Cover() {
           position: relative; z-index: 3;
           perspective: 1600px; perspective-origin: 50% 40%;
           cursor: pointer;
+          /* 拉近透视：放大阶段 perspective 从 1600 → 900，营造靠近阅读的纵深感 */
+          transition: perspective 1.2s cubic-bezier(0.4, 0, 0.2, 1), z-index 0s linear 1.2s;
         }
         .book-3d {
           position: relative; width: 220px; height: 300px;
           transform-style: preserve-3d;
           transform: rotateY(-12deg) rotateX(4deg);
+          /* 整体放大用 scale，不改变书本身的 width/height，避免变形 */
           transition: transform 0.8s ease;
           animation: bookFloat 6s ease-in-out infinite;
         }
@@ -224,9 +237,32 @@ export default function Cover() {
           0%, 100% { transform: rotateY(-12deg) rotateX(4deg) translateY(0); }
           50% { transform: rotateY(-8deg) rotateX(2deg) translateY(-12px); }
         }
-        .cover-book-stage.opening .book-3d {
+        /* 阶段1：封面翻开（小书尺寸不变，封面 rotateY 翻开） */
+        .phase-opening .book-3d {
           animation: none;
           transform: rotateY(-6deg) rotateX(2deg) translateY(-6px);
+        }
+        /* 阶段2：翻开后靠近+放大到目录页大书尺寸（不变形、不超限），并居中对齐目录页大书位置
+           目录页大书显示尺寸 ≈ min(92vw,1080px)×min(78vh,660px)，比例约1.64:1
+           封面小书 220×300，scale(2.2)后 484×660（短边=目录页高度上限，长边<宽度上限）
+           perspective 拉近 + 旋转到目录页大书视角，营造翻开靠近阅读的纵深感
+           书舞台绝对定位+居中，让放大后的书正对页面中央（与目录页大书位置一致） */
+        .phase-expanding .book-3d,
+        .phase-done .book-3d {
+          animation: none;
+          transform: scale(2.2) rotateX(20deg) rotateY(-6deg);
+          transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .phase-expanding.cover-book-stage,
+        .phase-done.cover-book-stage {
+          perspective: 900px;  /* 拉近透视，强化"靠近"感 */
+          z-index: 50;         /* 放大时盖在文案上方 */
+          /* 舞台绝对定位居中，脱离 flex 流，让书正对页面中央 */
+          position: absolute;
+          left: 65%; top: 50%;
+          transform: translate(-50%, -50%);
+          /* 舞台本身尺寸缩小到书原始大小，让书 scale 后基于舞台中心放大居中 */
+          width: 220px; height: 300px;
         }
 
         /* 书脊（左侧立柱） */
@@ -301,7 +337,9 @@ export default function Cover() {
           transform: translateZ(2px);
           z-index: 5;
         }
-        .cover-book-stage.opening .book-cover {
+        .cover-book-stage.phase-opening .book-cover,
+        .cover-book-stage.phase-expanding .book-cover,
+        .cover-book-stage.phase-done .book-cover {
           transform: translateZ(2px) rotateY(-168deg);
         }
         .cover-face {
