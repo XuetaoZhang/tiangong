@@ -5,6 +5,10 @@ import * as THREE from 'three'
 import { useStore } from '../store/useStore.js'
 import Tongche from './models/Tongche.jsx'
 import Longgu from './models/Longgu.jsx'
+import Shuidui from './models/Shuidui.jsx'
+import Fangzhi from './models/Fangzhi.jsx'
+import Gufeng from './models/Gufeng.jsx'
+import Diaoban from './models/Diaoban.jsx'
 
 // 视角预设（配合左斜前方俯视书本的视角）
 const VIEW_PRESETS = {
@@ -99,6 +103,38 @@ export default function Scene3D({ artifact }) {
           )}
           {artifact.id === 'longgu' && (
             <Longgu
+              highlightedPartId={highlightedPartId}
+              explode={explode}
+              simSpeed={simSpeed}
+              onSelectPart={handleSelectPart}
+            />
+          )}
+          {artifact.id === 'shuidui' && (
+            <Shuidui
+              highlightedPartId={highlightedPartId}
+              explode={explode}
+              simSpeed={simSpeed}
+              onSelectPart={handleSelectPart}
+            />
+          )}
+          {artifact.id === 'fangzhi' && (
+            <Fangzhi
+              highlightedPartId={highlightedPartId}
+              explode={explode}
+              simSpeed={simSpeed}
+              onSelectPart={handleSelectPart}
+            />
+          )}
+          {artifact.id === 'gufeng' && (
+            <Gufeng
+              highlightedPartId={highlightedPartId}
+              explode={explode}
+              simSpeed={simSpeed}
+              onSelectPart={handleSelectPart}
+            />
+          )}
+          {artifact.id === 'diaoban' && (
+            <Diaoban
               highlightedPartId={highlightedPartId}
               explode={explode}
               simSpeed={simSpeed}

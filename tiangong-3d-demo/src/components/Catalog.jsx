@@ -13,14 +13,14 @@ const tocData = [
         items: [
           { id: 'tongche', name: '筒车', page: '一' },
           { id: 'longgu', name: '龙骨水车', page: '三' },
-          { id: 'shuidui', name: '水碓', page: '七', soon: true },
+          { id: 'shuidui', name: '水碓', page: '七' },
         ],
       },
       {
         name: '乃服',
         sub: '纺织·织造',
         items: [
-          { id: 'fangzhi', name: '纺织机', page: '九', soon: true },
+          { id: 'fangzhi', name: '纺织机', page: '九' },
         ],
       },
     ],
@@ -29,17 +29,17 @@ const tocData = [
     juan: '卷之下',
     chapters: [
       {
-        name: '治铸',
+        name: '冶铸',
         sub: '铸造·冶铁',
         items: [
-          { id: 'gufeng', name: '鼓风炉', page: '十三', soon: true },
+          { id: 'gufeng', name: '鼓风炉', page: '十三' },
         ],
       },
       {
-        name: '杀青',
-        sub: '造纸·印刷',
+        name: '丹青',
+        sub: '制墨·雕版',
         items: [
-          { id: 'huozi', name: '活字印刷', page: '十五', soon: true },
+          { id: 'diaoban', name: '雕版印刷', page: '十五' },
         ],
       },
     ],
