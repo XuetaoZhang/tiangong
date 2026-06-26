@@ -61,7 +61,11 @@ export default function Cover() {
       // 2) 放大+位移+旋转到目录页大书形态（1.2s）
       timer.current = setTimeout(() => {
         setPhase('done')
-        go('catalog')   // catalog 会跳过自己的入场动画直接显示
+        // 3) done 阶段：书保持打开放大状态，淡出封面书（不关上书）
+        //    淡出过程中切到目录页，目录此时开始入场动画（淡入+缩放），无缝衔接
+        timer.current = setTimeout(() => {
+          go('catalog')
+        }, 500)
       }, 1200)
     }, 1500)
   }
@@ -305,8 +309,10 @@ export default function Cover() {
         .phase-done .book-3d {
           animation: none;
           transform: scale(2.2) rotateX(12deg) rotateY(-6deg);
-          transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
         }
+        /* done 阶段：书保持打开+放大状态，只淡出不关上（与目录入场淡入衔接） */
+        .phase-done .book-3d { opacity: 0; }
         .phase-expanding.cover-book-stage,
         .phase-done.cover-book-stage {
           perspective: 900px;  /* 拉近透视，强化"靠近"感 */
