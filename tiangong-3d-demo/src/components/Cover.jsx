@@ -304,7 +304,7 @@ export default function Cover() {
         .phase-expanding .book-3d,
         .phase-done .book-3d {
           animation: none;
-          transform: scale(2.2) rotateX(20deg) rotateY(-6deg);
+          transform: scale(2.2) rotateX(12deg) rotateY(-6deg);
           transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .phase-expanding.cover-book-stage,

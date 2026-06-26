@@ -180,22 +180,22 @@ export default function Catalog() {
         .catalog-stage {
           position: relative; display: flex;
           width: min(92vw, 1080px); height: min(78vh, 660px);
-          transform: rotateX(20deg) rotateY(-6deg) scale(0.9);
+          transform: rotateX(12deg) rotateY(-6deg) scale(0.9);
           transform-style: preserve-3d;
           opacity: 0; transition: all 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .catalog-stage.entered { transform: rotateX(20deg) rotateY(-6deg) scale(1); opacity: 1; }
+        .catalog-stage.entered { transform: rotateX(12deg) rotateY(-6deg) scale(1); opacity: 1; }
         .catalog-stage.flipping-fwd { animation: catalogFlipFwd 1.1s cubic-bezier(0.5, 0, 0.5, 1) forwards; }
         .catalog-stage.flipping-back { animation: catalogFlipBack 0.9s cubic-bezier(0.5, 0, 0.5, 1) forwards; }
 
         @keyframes catalogFlipFwd {
-          0% { transform: rotateX(20deg) rotateY(-6deg) scale(1); }
-          30% { transform: rotateX(8deg) rotateY(-3deg) scale(0.96); }
-          100% { transform: rotateX(20deg) rotateY(-6deg) scale(0.9); opacity: 0; }
+          0% { transform: rotateX(12deg) rotateY(-6deg) scale(1); }
+          30% { transform: rotateX(6deg) rotateY(-3deg) scale(0.96); }
+          100% { transform: rotateX(12deg) rotateY(-6deg) scale(0.9); opacity: 0; }
         }
         @keyframes catalogFlipBack {
-          0% { transform: rotateX(20deg) rotateY(-6deg) scale(1); }
-          100% { transform: rotateX(20deg) rotateY(-6deg) scale(0.85); opacity: 0; }
+          0% { transform: rotateX(12deg) rotateY(-6deg) scale(1); }
+          100% { transform: rotateX(12deg) rotateY(-6deg) scale(0.85); opacity: 0; }
         }
 
         /* 左侧立体书脊立柱（与封面 3D 模型一致：深色木布质感 + 厚度） */
@@ -252,17 +252,19 @@ export default function Catalog() {
         .page-edge-curl.left { left: 0; background: linear-gradient(90deg, rgba(58,37,24,0.18) 0%, transparent 100%); }
         .page-edge-curl.right { right: 0; background: linear-gradient(270deg, rgba(58,37,24,0.18) 0%, transparent 100%); }
         .book-spine {
-          width: 22px; align-self: stretch; position: relative; z-index: 3;
+          width: 5px; align-self: stretch; position: relative; z-index: 3;
           background: linear-gradient(90deg, rgba(0,0,0,0.05) 0%, rgba(58,37,24,0.35) 30%, rgba(42,24,16,0.55) 50%, rgba(58,37,24,0.35) 70%, rgba(0,0,0,0.05) 100%);
         }
         .spine-shadow-left { position: absolute; left: -8px; top: 0; bottom: 0; width: 12px; background: linear-gradient(270deg, rgba(0,0,0,0.25), transparent); }
         .spine-shadow-right { position: absolute; right: -8px; top: 0; bottom: 0; width: 12px; background: linear-gradient(90deg, rgba(0,0,0,0.25), transparent); }
         .binding-holes {
           position: absolute; right: 0.5rem; top: 0; bottom: 0; width: 8px; z-index: 4;
+          /* 4个线装孔（与封面一致：均匀分布） */
           background:
-            radial-gradient(circle at 4px 18%, rgba(42,24,16,0.5) 2px, transparent 3px),
-            radial-gradient(circle at 4px 50%, rgba(42,24,16,0.5) 2px, transparent 3px),
-            radial-gradient(circle at 4px 82%, rgba(42,24,16,0.5) 2px, transparent 3px);
+            radial-gradient(circle at 4px 12%, rgba(42,24,16,0.5) 2px, transparent 3px),
+            radial-gradient(circle at 4px 37%, rgba(42,24,16,0.5) 2px, transparent 3px),
+            radial-gradient(circle at 4px 63%, rgba(42,24,16,0.5) 2px, transparent 3px),
+            radial-gradient(circle at 4px 88%, rgba(42,24,16,0.5) 2px, transparent 3px);
         }
 
         /* ===== 左页：书名页 ===== */

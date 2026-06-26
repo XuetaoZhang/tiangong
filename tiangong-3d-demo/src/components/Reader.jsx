@@ -259,15 +259,15 @@ function ReaderStyles() {
       .book-stage {
         position: relative; display: flex;
         width: min(94vw, 1180px); height: min(78vh, 680px);
-        transform: rotateX(20deg) rotateY(-6deg) scale(0.9);
+        transform: rotateX(12deg) rotateY(-6deg) scale(0.9);
         transform-style: preserve-3d;
         opacity: 0; transition: all 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
       }
-      .book-stage.entered { transform: rotateX(20deg) rotateY(-6deg) scale(1); opacity: 1; }
+      .book-stage.entered { transform: rotateX(12deg) rotateY(-6deg) scale(1); opacity: 1; }
       .book-stage.turning { animation: bookShake 0.8s ease; }
       @keyframes bookShake {
-        0%, 100% { transform: rotateX(20deg) rotateY(-6deg) scale(1); }
-        50% { transform: rotateX(20deg) rotateY(-6deg) scale(0.98) translateY(4px); }
+        0%, 100% { transform: rotateX(12deg) rotateY(-6deg) scale(1); }
+        50% { transform: rotateX(12deg) rotateY(-6deg) scale(0.98) translateY(4px); }
       }
 
       /* 左侧立体书脊立柱（与封面 3D 模型一致：深色木布质感 + 厚度） */
@@ -351,7 +351,7 @@ function ReaderStyles() {
 
       /* 书脊 —— 中间立体凹陷 */
       .book-spine {
-        width: 22px; align-self: stretch; position: relative; z-index: 3;
+        width: 8px; align-self: stretch; position: relative; z-index: 3;
         background:
           linear-gradient(90deg,
             rgba(0,0,0,0.05) 0%,
@@ -387,10 +387,12 @@ function ReaderStyles() {
       }
       .binding-holes.binding-right {
         right: 0.5rem;
+        /* 4个线装孔（与封面一致：均匀分布） */
         background:
-          radial-gradient(circle at 4px 18%, rgba(42,24,16,0.5) 2px, transparent 3px),
-          radial-gradient(circle at 4px 50%, rgba(42,24,16,0.5) 2px, transparent 3px),
-          radial-gradient(circle at 4px 82%, rgba(42,24,16,0.5) 2px, transparent 3px);
+          radial-gradient(circle at 4px 12%, rgba(42,24,16,0.5) 2px, transparent 3px),
+          radial-gradient(circle at 4px 37%, rgba(42,24,16,0.5) 2px, transparent 3px),
+          radial-gradient(circle at 4px 63%, rgba(42,24,16,0.5) 2px, transparent 3px),
+          radial-gradient(circle at 4px 88%, rgba(42,24,16,0.5) 2px, transparent 3px);
       }
 
       /* ===== 古籍插图底图（右页）—— 天工开物原版古籍原图 ===== */
