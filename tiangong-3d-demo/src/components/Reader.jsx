@@ -409,8 +409,10 @@ function ReaderStyles() {
         max-width: 100%; max-height: 100%;
         width: auto; height: auto;
         object-fit: contain;
-        /* 轻微 sepia 让黑线偏暖棕，融入宣纸 */
-        filter: sepia(0.4) saturate(0.9) brightness(0.95) drop-shadow(0 2px 6px rgba(139,69,19,0.2));
+        /* multiply：白底与书页背景相乘后等于书页色，黑线保留，自然融入宣纸 */
+        mix-blend-mode: multiply;
+        /* 轻微 sepia 让黑线偏暖棕，更贴近古籍墨色 */
+        filter: sepia(0.35) saturate(0.9) brightness(1.02);
       }
 
       /* ===== 3D 器物悬浮层（独立于书本，正立悬浮在书本上空） ===== */
