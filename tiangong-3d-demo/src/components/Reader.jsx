@@ -49,6 +49,14 @@ export default function Reader() {
       {/* 桌面端：书本展开布局 */}
       <div className="reader-desktop">
         <div className={`book-stage ${entered ? 'entered' : ''} ${pageTurning ? 'turning' : ''}`}>
+          {/* 左侧立体书脊立柱（与封面 3D 模型一致） */}
+          <div className="book-spine-3d" />
+          {/* 右侧书页层叠厚度（与封面 3D 模型一致） */}
+          <div className="book-pages-edge">
+            {Array.from({ length: 14 }).map((_, i) => (
+              <div key={i} className="page-layer" style={{ right: i * 0.5 }} />
+            ))}
+          </div>
           {/* 书本底部阴影 */}
           <div className="book-shadow" />
 
@@ -204,15 +212,14 @@ function ReaderStyles() {
     <style>{`
       .reader-page {
         position: fixed; inset: 0; overflow: hidden;
-        background: linear-gradient(135deg, #2A1810 0%, #3A2518 50%, #4A2E1A 100%);
+        background: linear-gradient(135deg, #2A1810 0%, #4A2E1A 40%, #6B3F22 100%);
         display: flex; flex-direction: column;
       }
       .reader-page::before {
-        content: ''; position: absolute; inset: 0;
-        background:
-          radial-gradient(circle at 30% 20%, rgba(232,200,140,0.06) 0%, transparent 50%),
-          radial-gradient(circle at 70% 80%, rgba(199,91,42,0.04) 0%, transparent 50%);
-        pointer-events: none;
+        content: ''; position: absolute; inset: 0; pointer-events: none;
+        background-image:
+          radial-gradient(circle at 30% 20%, rgba(232,200,140,0.08) 0%, transparent 40%),
+          radial-gradient(circle at 70% 80%, rgba(199,91,42,0.06) 0%, transparent 40%);
       }
 
       /* ===== 顶部导航 ===== */
@@ -247,7 +254,7 @@ function ReaderStyles() {
       /* 左斜前方视角：书本后仰 + 微偏，3D 器物悬浮其上 */
       .reader-desktop {
         flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
-        padding: 0 1rem; perspective: 1400px; perspective-origin: 50% 30%;
+        padding: 0 1rem; perspective: 900px; perspective-origin: 50% 30%;
       }
       .book-stage {
         position: relative; display: flex;
@@ -261,6 +268,28 @@ function ReaderStyles() {
       @keyframes bookShake {
         0%, 100% { transform: rotateX(20deg) rotateY(-6deg) scale(1); }
         50% { transform: rotateX(20deg) rotateY(-6deg) scale(0.98) translateY(4px); }
+      }
+
+      /* 左侧立体书脊立柱（与封面 3D 模型一致：深色木布质感 + 厚度） */
+      .book-spine-3d {
+        position: absolute; left: -14px; top: 0; bottom: 0; width: 14px;
+        background: linear-gradient(90deg, #3A2518 0%, #5C3A1E 40%, #2A1810 100%);
+        border-radius: 2px 0 0 2px;
+        box-shadow: -3px 0 12px rgba(0,0,0,0.5);
+        transform: translateZ(-0.5px);
+        z-index: 1;
+      }
+      /* 右侧书页层叠厚度（与封面 3D 模型一致：宣纸切口纹理） */
+      .book-pages-edge {
+        position: absolute; right: -8px; top: 4px; bottom: 4px; width: 8px;
+        background: linear-gradient(90deg, #EDE3CC, #D8CBA8, #EDE3CC);
+        border-radius: 0 2px 2px 0;
+        box-shadow: 2px 0 6px rgba(0,0,0,0.2);
+        overflow: hidden; z-index: 1;
+      }
+      .page-layer {
+        position: absolute; top: 0; bottom: 0; width: 1px;
+        background: rgba(74,63,54,0.18);
       }
 
       /* 书本底部厚重阴影 */
