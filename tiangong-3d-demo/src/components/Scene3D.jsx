@@ -8,7 +8,7 @@ import Longgu from './models/Longgu.jsx'
 import Shuidui from './models/Shuidui.jsx'
 import Fangzhi from './models/Fangzhi.jsx'
 import Gufeng from './models/Gufeng.jsx'
-import Diaoban from './models/Diaoban.jsx'
+import Mo from './models/Mo.jsx'
 
 // 视角预设（配合左斜前方俯视书本的视角）
 const VIEW_PRESETS = {
@@ -133,8 +133,8 @@ export default function Scene3D({ artifact }) {
               onSelectPart={handleSelectPart}
             />
           )}
-          {artifact.id === 'diaoban' && (
-            <Diaoban
+          {artifact.id === 'mo' && (
+            <Mo
               highlightedPartId={highlightedPartId}
               explode={explode}
               simSpeed={simSpeed}

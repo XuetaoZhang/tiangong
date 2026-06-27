@@ -53,10 +53,10 @@ export default function IllustrationBg({ artifact }) {
       />
     )
   }
-  if (artifact.id === 'diaoban') {
+  if (artifact.id === 'mo') {
     return (
       <img
-        src="/pic/diaoban.png"
+        src="/pic/mo.png"
         alt="天工开物·丹青卷松烟制墨原版插图（明崇祯十年涂绍煃刊本·法国国家图书馆藏）"
         className="illus-img"
         draggable={false}

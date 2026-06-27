@@ -37,9 +37,9 @@ const tocData = [
       },
       {
         name: '丹青',
-        sub: '制墨·雕版',
+        sub: '制墨·松烟',
         items: [
-          { id: 'diaoban', name: '雕版印刷', page: '十五' },
+          { id: 'mo', name: '墨', page: '十五' },
         ],
       },
     ],
@@ -102,7 +102,7 @@ export default function Catalog() {
             <div className="page-texture-overlay" />
             <div className="page-edge-curl left" />
             <div className="catalog-titlepage">
-              <div className="title-seal">天</div>
+              {/* <div className="title-seal">天</div> */}
               <h1 className="title-main">天工開物</h1>
               <p className="title-sub">宋應星 著</p>
               <div className="title-rule" />
