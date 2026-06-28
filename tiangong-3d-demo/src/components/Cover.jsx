@@ -34,13 +34,13 @@ const tocData = [
           { id: 'gufeng', name: '鼓风炉', page: '十三' },
         ],
       },
-      {
-        name: '丹青',
-        sub: '制墨·松烟',
-        items: [
-          { id: 'mo', name: '墨', page: '十五' },
-        ],
-      },
+      // {
+      //   name: '丹青',
+      //   sub: '制墨·松烟',
+      //   items: [
+      //     { id: 'mo', name: '墨', page: '十五' },
+      //   ],
+      // },
     ],
   },
 ]
