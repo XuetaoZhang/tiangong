@@ -6,16 +6,16 @@ import * as THREE from 'three'
 // 部件 ID: furnace(炉体), tuyere(风口风沟), bellows(风箱), stack(烟囱炉口)
 // 结构：土筑竖炉 + 侧面风箱 + 风口送风 + 顶部炉口排烟加料
 export default function Gufeng({ highlightedPartId, explode, simSpeed, onSelectPart }) {
-  const bellowsRef = useRef()
+  const pistonRef = useRef()
   const glowRef = useRef()
   const smokeRef = useRef()
 
   useFrame((state) => {
     const t = state.clock.elapsedTime
     const speed = simSpeed > 0 ? simSpeed / 50 : 0
-    // 风箱推拉
-    if (bellowsRef.current) {
-      bellowsRef.current.position.x = 1.5 + Math.sin(t * 2.5 * speed) * 0.18
+    // 活塞推拉（只有推杆和手柄移动，风箱主体固定）
+    if (pistonRef.current) {
+      pistonRef.current.position.x = Math.sin(t * 2.5 * speed) * 0.2 +0.55
     }
     // 炉内火光闪烁
     if (glowRef.current) {
@@ -46,32 +46,45 @@ export default function Gufeng({ highlightedPartId, explode, simSpeed, onSelectP
   })
 
   const furnaceH = 2.0       // 炉体高度
-  const furnaceRB = 0.75     // 炉底半径
-  const furnaceRT = 0.55     // 炉顶半径（腰鼓形上口）
-  const furnaceRM = 0.85     // 炉腰半径（腰鼓形最宽处）
+  const furnaceRB = 0.6      // 炉底半径（缩小以匹配古籍插图）
+  const furnaceRT = 0.45     // 炉顶半径（收口）
+  const furnaceRM = 0.68     // 炉腰半径（减小腰鼓形宽度）
 
   return (
     <group position={[0, -0.3, 0]}>
-      {/* ============ 炉体（土筑竖炉，腰鼓形） ============ */}
-      {/* 主炉身（用球体压扁模拟腰鼓形） */}
-      <mesh material={clayMat('furnace', '#8B5A3C')} position={[0, furnaceH / 2, 0]} castShadow
-        onClick={(e) => { e.stopPropagation(); onSelectPart('furnace') }}
-        scale={[1, furnaceH / (furnaceRM * 2), 1]}>
-        <sphereGeometry args={[furnaceRM, 24, 24]} />
+      {/* ============ 炉体（土筑竖炉，腰鼓形：下圆柱+中腰鼓+上收口） ============ */}
+      {/* 炉下段（圆柱形炉身，0.3-0.8m） */}
+      <mesh material={clayMat('furnace', '#8B5A3C')} position={[0, 0.55, 0]} castShadow
+        onClick={(e) => { e.stopPropagation(); onSelectPart('furnace') }}>
+        <cylinderGeometry args={[furnaceRB, furnaceRB, 0.5, 24]} />
+      </mesh>
+      {/* 炉中段腰鼓（最宽处，0.8-1.4m） */}
+      <mesh material={clayMat('furnace', '#8B5A3C')} position={[0, 1.1, 0]} castShadow
+        onClick={(e) => { e.stopPropagation(); onSelectPart('furnace') }}>
+        <cylinderGeometry args={[furnaceRM, furnaceRB, 0.6, 24]} />
+      </mesh>
+      {/* 炉上段（收口段，1.4-2.0m） */}
+      <mesh material={clayMat('furnace', '#7B4A2E')} position={[0, 1.7, 0]} castShadow
+        onClick={(e) => { e.stopPropagation(); onSelectPart('furnace') }}>
+        <cylinderGeometry args={[furnaceRT, furnaceRM, 0.6, 24]} />
       </mesh>
       {/* 炉底基座（更宽的底座） */}
-      <mesh material={clayMat('furnace', '#6B4226')} position={[0, 0.1, 0]} castShadow
+      <mesh material={clayMat('furnace', '#6B4226')} position={[0, 0.15, 0]} castShadow
         onClick={(e) => { e.stopPropagation(); onSelectPart('furnace') }}>
-        <cylinderGeometry args={[furnaceRB, furnaceRB + 0.1, 0.3, 20]} />
+        <cylinderGeometry args={[furnaceRB + 0.05, furnaceRB + 0.15, 0.3, 20]} />
+      </mesh>
+      {/* 炉缸（底部积聚铜液的区域，内凹标记） */}
+      <mesh material={clayMat('furnace', '#2A1810')} position={[0, 0.35, 0]}>
+        <cylinderGeometry args={[furnaceRB - 0.15, furnaceRB - 0.1, 0.2, 16]} />
       </mesh>
       {/* 炉口（顶部收口环） */}
       <mesh material={clayMat('furnace', '#5C3A1E')} position={[0, furnaceH + 0.05, 0]} castShadow>
         <cylinderGeometry args={[furnaceRT, furnaceRT + 0.08, 0.18, 20]} />
       </mesh>
-      {/* 炉体加固铁箍（3道） */}
-      {[0.5, 1.0, 1.5].map((y, i) => (
+      {/* 炉体加固铁箍（简化为2道） */}
+      {[0.7, 1.3].map((y, i) => (
         <mesh key={i} material={clayMat('furnace', '#3A2518')} position={[0, y, 0]}>
-          <torusGeometry args={[furnaceRM - 0.05 + (y > 1 ? -0.1 : 0), 0.025, 6, 24]} />
+          <torusGeometry args={[furnaceRM - 0.05 + (y > 1 ? -0.08 : 0), 0.022, 6, 24]} />
         </mesh>
       ))}
 
@@ -94,43 +107,76 @@ export default function Gufeng({ highlightedPartId, explode, simSpeed, onSelectP
         </mesh>
       </group>
 
-      {/* ============ 风箱（侧面活塞式鼓风器） ============ */}
-      <group ref={bellowsRef} position={[1.5, 0.9, 0]} onClick={(e) => { e.stopPropagation(); onSelectPart('bellows') }}>
-        {/* 风箱箱体（长方形木箱） */}
-        <mesh material={woodMat('bellows', '#8B6F3A')} castShadow>
-          <boxGeometry args={[1.0, 0.5, 0.5]} />
+      {/* ============ 风箱（侧面活塞式鼓风器，箱体固定，只有推杆运动） ============ */}
+      <group position={[1.3, 0.2, 0]} onClick={(e) => { e.stopPropagation(); onSelectPart('bellows') }}>
+        {/* 风箱主体（固定的大木箱，不会移动） */}
+        <mesh material={woodMat('bellows', '#8B6F3A')} position={[0, 0, 0]} castShadow>
+          <boxGeometry args={[1.0, 0.4, 0.5]} />
         </mesh>
-        {/* 风箱活塞杆（外露的拉杆） */}
-        <mesh material={woodMat('bellows', '#5C3A1E')} position={[0.7, 0, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-          <cylinderGeometry args={[0.04, 0.04, 0.6, 8]} />
+
+        {/* 风箱前端封板 */}
+        <mesh material={woodMat('bellows', '#7B4F2E')} position={[-0.51, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
+          <boxGeometry args={[0.52, 0.42, 0.04]} />
         </mesh>
-        {/* 拉杆把手 */}
-        <mesh material={woodMat('bellows', '#3A2518')} position={[1.0, 0, 0]} castShadow>
-          <boxGeometry args={[0.08, 0.18, 0.06]} />
+
+        {/* 风箱后端封板（带有活塞孔） */}
+        <mesh material={woodMat('bellows', '#7B4F2E')} position={[0.51, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
+          <boxGeometry args={[0.52, 0.42, 0.04]} />
         </mesh>
-        {/* 风箱出风口（连接炉体） */}
-        <mesh material={woodMat('bellows', '#6B4226')} position={[-0.55, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.1, 0.12, 0.2, 12]} />
+
+        {/* 风箱出风口 */}
+        <mesh material={clayMat('bellows', '#7B4A2E')} position={[-0.6, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.06, 0.09, 0.2, 12]} />
         </mesh>
-        {/* 风箱支架 */}
-        <mesh material={woodMat('bellows', '#5C3A1E')} position={[0, -0.4, 0]} castShadow>
-          <boxGeometry args={[0.1, 0.5, 0.1]} />
-        </mesh>
+
+        {/* 风箱支撑腿（四根腿接地，固定箱体） */}
+        {[
+          [-0.35, -0.5, -0.18],
+          [-0.35, -0.5, 0.18],
+          [0.35, -0.5, -0.18],
+          [0.35, -0.5, 0.18]
+        ].map(([x, y, z], i) => (
+          <mesh key={i} material={woodMat('bellows', '#5C3A1E')} position={[x, y, z]} castShadow>
+            <cylinderGeometry args={[0.03, 0.04, 1.0, 8]} />
+          </mesh>
+        ))}
+
+        {/* 活塞推拉机构（这部分会移动） */}
+        <group ref={pistonRef} position={[0.7, 0, 0]}>
+          {/* 活塞推杆（从箱体后端伸出，明显可见） */}
+          <mesh material={woodMat('bellows', '#5C3A1E')} position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+            <cylinderGeometry args={[0.03, 0.03, 0.7, 8]} />
+          </mesh>
+
+          {/* 推杆手柄（人推拉的地方，更大更明显） */}
+          <mesh material={woodMat('bellows', '#3A2518')} position={[0.35, 0, 0]} castShadow>
+            <boxGeometry args={[0.1, 0.25, 0.08]} />
+          </mesh>
+
+          {/* 手柄横木（便于抓握） */}
+          <mesh material={woodMat('bellows', '#2A1810')} position={[0.35, 0.1, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+            <cylinderGeometry args={[0.025, 0.025, 0.18, 8]} />
+          </mesh>
+        </group>
       </group>
 
       {/* ============ 风口风沟（风箱到炉体的送风通道） ============ */}
       <group onClick={(e) => { e.stopPropagation(); onSelectPart('tuyere') }}>
-        {/* 送风管（连接风箱与炉体） */}
-        <mesh material={clayMat('tuyere', '#5C3A1E')} position={[0.85, 0.9, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-          <cylinderGeometry args={[0.11, 0.13, 0.6, 12]} />
+        {/* 主送风管（从风箱连接到炉体，调整高度匹配新的风箱位置） */}
+        <mesh material={clayMat('tuyere', '#5C3A1E')} position={[0.68, 0.2, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.08, 0.10, 0.65, 12]} />
         </mesh>
-        {/* 炉体风口（穿孔标记） */}
-        <mesh material={clayMat('tuyere', '#2A1810')} position={[furnaceRM - 0.05, 0.9, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.08, 0.08, 0.2, 10]} />
+        {/* 炉体主风口（侧面穿孔） */}
+        <mesh material={clayMat('tuyere', '#2A1810')} position={[furnaceRB - 0.05, 0.2, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.07, 0.07, 0.12, 10]} />
         </mesh>
         {/* 炉底风沟（地面通风道） */}
-        <mesh material={clayMat('tuyere', '#6B4226')} position={[0, 0.05, 0.3]} castShadow>
-          <boxGeometry args={[1.2, 0.1, 0.15]} />
+        <mesh material={clayMat('tuyere', '#6B4226')} position={[0, 0.08, 0.3]} castShadow>
+          <boxGeometry args={[1.2, 0.10, 0.18]} />
+        </mesh>
+        {/* 风沟盖板（木制） */}
+        <mesh material={woodMat('tuyere', '#5C3A1E')} position={[0, 0.14, 0.3]} castShadow>
+          <boxGeometry args={[1.2, 0.03, 0.20]} />
         </mesh>
       </group>
 
@@ -155,12 +201,12 @@ export default function Gufeng({ highlightedPartId, explode, simSpeed, onSelectP
         )
       })}
 
-      {/* 铁范（铸模，炉子前方承接铜汁） */}
-      <mesh material={clayMat('furnace', '#3A2518')} position={[-0.9, -0.2, 0]} castShadow>
-        <boxGeometry args={[0.5, 0.4, 0.4]} />
+      {/* 铁范（铸模，炉子前方承接铜汁，简化设计） */}
+      <mesh material={clayMat('furnace', '#3A2518')} position={[-0.85, -0.18, 0]} castShadow>
+        <boxGeometry args={[0.45, 0.35, 0.38]} />
       </mesh>
-      <mesh material={clayMat('furnace', '#1A0F08')} position={[-0.9, -0.1, 0]}>
-        <boxGeometry args={[0.4, 0.2, 0.4]} />
+      <mesh material={clayMat('furnace', '#1A0F08')} position={[-0.85, -0.08, 0]}>
+        <boxGeometry args={[0.35, 0.18, 0.35]} />
       </mesh>
     </group>
   )
