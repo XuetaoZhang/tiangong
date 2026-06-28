@@ -15,7 +15,7 @@ export default function Gufeng({ highlightedPartId, explode, simSpeed, onSelectP
     const speed = simSpeed > 0 ? simSpeed / 50 : 0
     // 活塞推拉（只有推杆和手柄移动，风箱主体固定）
     if (pistonRef.current) {
-      pistonRef.current.position.x = Math.sin(t * 2.5 * speed) * 0.2 +0.55
+      pistonRef.current.position.x = Math.sin(t * 2.5 * speed) * 0.25 + 0.65
     }
     // 炉内火光闪烁
     if (glowRef.current) {
@@ -108,54 +108,59 @@ export default function Gufeng({ highlightedPartId, explode, simSpeed, onSelectP
       </group>
 
       {/* ============ 风箱（侧面活塞式鼓风器，箱体固定，只有推杆运动） ============ */}
-      <group position={[1.3, 0.2, 0]} onClick={(e) => { e.stopPropagation(); onSelectPart('bellows') }}>
-        {/* 风箱主体（固定的大木箱，不会移动） */}
+      <group position={[1.4, 0.8, 0]} onClick={(e) => { e.stopPropagation(); onSelectPart('bellows') }}>
+        {/* 风箱主体（固定的大木箱，不会移动，尺寸增大到接近炉体高度） */}
         <mesh material={woodMat('bellows', '#8B6F3A')} position={[0, 0, 0]} castShadow>
-          <boxGeometry args={[1.0, 0.4, 0.5]} />
+          <boxGeometry args={[1.2, 1.2, 0.6]} />
         </mesh>
 
         {/* 风箱前端封板 */}
-        <mesh material={woodMat('bellows', '#7B4F2E')} position={[-0.51, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
-          <boxGeometry args={[0.52, 0.42, 0.04]} />
+        <mesh material={woodMat('bellows', '#7B4F2E')} position={[-0.61, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
+          <boxGeometry args={[0.62, 1.22, 0.04]} />
         </mesh>
 
         {/* 风箱后端封板（带有活塞孔） */}
-        <mesh material={woodMat('bellows', '#7B4F2E')} position={[0.51, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
-          <boxGeometry args={[0.52, 0.42, 0.04]} />
+        <mesh material={woodMat('bellows', '#7B4F2E')} position={[0.61, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
+          <boxGeometry args={[0.62, 1.22, 0.04]} />
         </mesh>
 
         {/* 风箱出风口 */}
-        <mesh material={clayMat('bellows', '#7B4A2E')} position={[-0.6, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.06, 0.09, 0.2, 12]} />
+        <mesh material={clayMat('bellows', '#7B4A2E')} position={[-0.7, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.08, 0.12, 0.25, 12]} />
         </mesh>
 
         {/* 风箱支撑腿（四根腿接地，固定箱体） */}
         {[
-          [-0.35, -0.5, -0.18],
-          [-0.35, -0.5, 0.18],
-          [0.35, -0.5, -0.18],
-          [0.35, -0.5, 0.18]
+          [-0.4, -0.5, -0.25],
+          [-0.4, -0.5, 0.25],
+          [0.4, -0.7, -0.25],
+          [0.4, -0.7, 0.25]
         ].map(([x, y, z], i) => (
           <mesh key={i} material={woodMat('bellows', '#5C3A1E')} position={[x, y, z]} castShadow>
-            <cylinderGeometry args={[0.03, 0.04, 1.0, 8]} />
+            <cylinderGeometry args={[0.04, 0.05, 1.0, 8]} />
           </mesh>
         ))}
 
-        {/* 活塞推拉机构（这部分会移动） */}
+        {/* 活塞推拉机构（这部分会移动） - 上下两根推杆 */}
         <group ref={pistonRef} position={[0.7, 0, 0]}>
-          {/* 活塞推杆（从箱体后端伸出，明显可见） */}
-          <mesh material={woodMat('bellows', '#5C3A1E')} position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-            <cylinderGeometry args={[0.03, 0.03, 0.7, 8]} />
+          {/* 上推杆 */}
+          <mesh material={woodMat('bellows', '#5C3A1E')} position={[0, 0.3, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+            <cylinderGeometry args={[0.035, 0.035, 0.8, 8]} />
           </mesh>
 
-          {/* 推杆手柄（人推拉的地方，更大更明显） */}
-          <mesh material={woodMat('bellows', '#3A2518')} position={[0.35, 0, 0]} castShadow>
-            <boxGeometry args={[0.1, 0.25, 0.08]} />
+          {/* 下推杆 */}
+          <mesh material={woodMat('bellows', '#5C3A1E')} position={[0, -0.3, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+            <cylinderGeometry args={[0.035, 0.035, 0.8, 8]} />
+          </mesh>
+
+          {/* 推杆手柄（连接上下两根杆） */}
+          <mesh material={woodMat('bellows', '#3A2518')} position={[0.4, 0, 0]} castShadow>
+            <boxGeometry args={[0.12, 0.7, 0.1]} />
           </mesh>
 
           {/* 手柄横木（便于抓握） */}
-          <mesh material={woodMat('bellows', '#2A1810')} position={[0.35, 0.1, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-            <cylinderGeometry args={[0.025, 0.025, 0.18, 8]} />
+          <mesh material={woodMat('bellows', '#2A1810')} position={[0.4, 0, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.03, 0.03, 0.2, 8]} />
           </mesh>
         </group>
       </group>
@@ -163,12 +168,12 @@ export default function Gufeng({ highlightedPartId, explode, simSpeed, onSelectP
       {/* ============ 风口风沟（风箱到炉体的送风通道） ============ */}
       <group onClick={(e) => { e.stopPropagation(); onSelectPart('tuyere') }}>
         {/* 主送风管（从风箱连接到炉体，调整高度匹配新的风箱位置） */}
-        <mesh material={clayMat('tuyere', '#5C3A1E')} position={[0.68, 0.2, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-          <cylinderGeometry args={[0.08, 0.10, 0.65, 12]} />
+        <mesh material={clayMat('tuyere', '#5C3A1E')} position={[0.75, 0.8, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.10, 0.12, 0.7, 12]} />
         </mesh>
         {/* 炉体主风口（侧面穿孔） */}
-        <mesh material={clayMat('tuyere', '#2A1810')} position={[furnaceRB - 0.05, 0.2, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.07, 0.07, 0.12, 10]} />
+        <mesh material={clayMat('tuyere', '#2A1810')} position={[furnaceRB - 0.05, 0.8, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.09, 0.09, 0.12, 10]} />
         </mesh>
         {/* 炉底风沟（地面通风道） */}
         <mesh material={clayMat('tuyere', '#6B4226')} position={[0, 0.08, 0.3]} castShadow>
