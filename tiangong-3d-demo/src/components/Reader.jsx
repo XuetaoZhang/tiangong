@@ -16,11 +16,27 @@ export default function Reader() {
   const turnPage = useStore((s) => s.turnPage)
   const [entered, setEntered] = useState(false)
   const [mobileTab, setMobileTab] = useState('object') // object | text | tools
+  // 3D 模型揭示状态：modelShown 记录已展示过的器物，revealing 控制当前揭示动画
+  const [modelShown, setModelShown] = useState(() => new Set())
+  const [revealing, setRevealing] = useState(false)
+  // 当前器物是否已揭示（已展示过 或 正在揭示中）
+  const isRevealed = modelShown.has(artifactId) || revealing
 
   useEffect(() => {
     const t = setTimeout(() => setEntered(true), 100)
     return () => clearTimeout(t)
   }, [])
+
+  // 点击古画 → 触发揭示动画（1.2s）
+  const handleRevealModel = () => {
+    if (isRevealed) return
+    setRevealing(true)
+    // 动画结束后标记为已展示
+    setTimeout(() => {
+      setModelShown((prev) => new Set(prev).add(artifactId))
+      setRevealing(false)
+    }, 1200)
+  }
 
   const handleTurnPage = (dir) => {
     const ids = Object.keys(artifacts).filter(k => artifacts[k].status === 'online')
@@ -48,7 +64,7 @@ export default function Reader() {
 
       {/* 桌面端：书本展开布局 */}
       <div className="reader-desktop">
-        <div className={`book-stage ${entered ? 'entered' : ''} ${pageTurning ? 'turning' : ''}`}>
+        <div className={`book-stage ${entered ? 'entered' : ''} ${pageTurning ? 'turning' : ''} ${isRevealed ? 'revealed' : ''}`}>
           {/* 左侧立体书脊立柱（与封面 3D 模型一致） */}
           <div className="book-spine-3d" />
           {/* 右侧书页层叠厚度（与封面 3D 模型一致） */}
@@ -85,9 +101,15 @@ export default function Reader() {
           <div className="book-page book-right">
             <div className="page-texture-overlay" />
             <div className="page-edge-curl right" />
-            {/* 古籍插图底图（原版《天工开物》插图风格） */}
-            <div className="illustration-bg">
+            {/* 古籍插图底图 —— 未揭示时可点击，悬停发光 */}
+            <div
+              className={`illustration-bg ${isRevealed ? 'revealed' : 'clickable'}`}
+              onClick={handleRevealModel}
+            >
               <IllustrationBg artifact={artifact} />
+              {!isRevealed && (
+                <div className="illus-hint">點擊古畫查看3D模型</div>
+              )}
             </div>
             <div className="page-header">
               <span className="page-illus-mark">〔 {artifact.name}图 〕</span>
@@ -101,19 +123,21 @@ export default function Reader() {
           {pageTurning && <div className="page-flip" />}
         </div>
 
-        {/* 3D 器物悬浮层 —— 独立于书本，正立悬浮在书本上空 */}
-        <div className="floating-3d-layer" key={artifact.id}>
-          <div className="scene-glow" />
-          <Scene3D artifact={artifact} />
-          <div className="scene-hint">拖拽旋转 · 滚轮缩放 · 点击热点 ●</div>
-        </div>
+        {/* 3D 器物悬浮层 —— 揭示后才显示；揭示动画 scale 0.5→1 + opacity 0→1 */}
+        {isRevealed && (
+          <div className={`floating-3d-layer ${revealing ? 'revealing' : 'revealed'}`} key={artifact.id}>
+            <div className="scene-glow" />
+            <Scene3D artifact={artifact} />
+            <div className="scene-hint">拖拽旋转 · 滚轮缩放 · 点击热点 ●</div>
+          </div>
+        )}
 
         {/* 翻页按钮 */}
         <button className="page-nav page-prev" onClick={() => handleTurnPage(-1)} disabled={pageTurning}>‹</button>
         <button className="page-nav page-next" onClick={() => handleTurnPage(1)} disabled={pageTurning}>›</button>
 
-        {/* 工具栏 */}
-        <Toolbar artifact={artifact} />
+        {/* 工具栏 —— 揭示后才显示 */}
+        {isRevealed && <Toolbar artifact={artifact} />}
 
         {/* AI 释义卡片 */}
         <AICard artifact={artifact} />
@@ -265,6 +289,11 @@ function ReaderStyles() {
       }
       .book-stage.entered { transform: rotateX(12deg) rotateY(-6deg) scale(1); opacity: 1; }
       .book-stage.turning { animation: bookShake 0.8s ease; }
+      /* 揭示后：书本整体往后靠（translateZ -50px + 微旋转），1.2s 缓动 */
+      .book-stage.revealed {
+        transform: rotateX(10deg) rotateY(-4deg) scale(1) translateZ(-50px);
+        transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
       @keyframes bookShake {
         0%, 100% { transform: rotateX(12deg) rotateY(-6deg) scale(1); }
         50% { transform: rotateX(12deg) rotateY(-6deg) scale(0.98) translateY(4px); }
@@ -398,21 +427,48 @@ function ReaderStyles() {
       /* ===== 古籍插图底图（右页）—— 天工开物原版古籍原图 ===== */
       .illustration-bg {
         position: absolute; inset: 1.5rem 1.2rem 2rem 1.2rem; z-index: 2;
-        opacity: 1; pointer-events: none;
+        opacity: 1;
         display: flex; align-items: center; justify-content: center;
-        /* 容器背景色与书页米黄宣纸一致，PNG 白底已变透明，图片自然融入 */
         background:
           linear-gradient(135deg, #F4ECD8 0%, #EDE3CC 50%, #E8DCC0 100%);
         border-radius: 2px;
+        transition: filter 0.4s ease, box-shadow 0.4s ease;
       }
-      .illus-img {
+      /* 未揭示：可点击，悬停整个古画发光 */
+      .illustration-bg.clickable {
+        pointer-events: auto; cursor: pointer;
+      }
+      .illustration-bg.clickable:hover {
+        filter: drop-shadow(0 0 18px rgba(232,200,140,0.85)) brightness(1.08);
+        box-shadow: inset 0 0 30px rgba(232,200,140,0.35);
+      }
+      .illustration-bg.clickable:hover .illus-img {
+        filter: sepia(0.35) saturate(0.9) brightness(1.1);
+      }
+      /* 已揭示：恢复不可点击 */
+      .illustration-bg.revealed { pointer-events: none; }
+      .illustration-bg .illus-img {
         max-width: 100%; max-height: 100%;
         width: auto; height: auto;
         object-fit: contain;
-        /* multiply：白底与书页背景相乘后等于书页色，黑线保留，自然融入宣纸 */
         mix-blend-mode: multiply;
-        /* 轻微 sepia 让黑线偏暖棕，更贴近古籍墨色 */
         filter: sepia(0.35) saturate(0.9) brightness(1.02);
+        transition: filter 0.4s ease;
+      }
+      /* 点击提示文字 */
+      .illus-hint {
+        position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%);
+        font-family: var(--font-serif); font-size: 0.85rem; letter-spacing: 0.15em;
+        color: #5C3A1E; background: rgba(247,244,239,0.92);
+        padding: 0.35rem 1rem; border-radius: 100px;
+        border: 1px solid rgba(139,69,19,0.25);
+        box-shadow: 0 2px 12px rgba(58,37,24,0.15);
+        white-space: nowrap; pointer-events: none; z-index: 5;
+        animation: hintPulse 2s ease-in-out infinite;
+      }
+      @keyframes hintPulse {
+        0%, 100% { opacity: 0.75; transform: translateX(-50%) translateY(0); }
+        50% { opacity: 1; transform: translateX(-50%) translateY(-2px); }
       }
 
       /* ===== 3D 器物悬浮层（独立于书本，正立悬浮在书本上空） ===== */
@@ -421,6 +477,18 @@ function ReaderStyles() {
         width: 58%; height: 104%; z-index: 20; pointer-events: auto;
       }
       .floating-3d-layer canvas { width: 100% !important; height: 100% !important; }
+      /* 揭示动画：scale 0.5→1 + opacity 0→1，从 0.3s 开始（配合书本后靠） */
+      .floating-3d-layer.revealing {
+        animation: modelReveal 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      }
+      .floating-3d-layer.revealed {
+        opacity: 1; transform: translateX(-50%) scale(1);
+      }
+      @keyframes modelReveal {
+        0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+        25% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+        100% { opacity: 1; transform: translateX(-50%) scale(1); }
+      }
       /* 浮空光晕 —— 器物下方的"投影光"（极轻微暖调衬托，不抢接触阴影的戏） */
       .scene-glow {
         position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%);

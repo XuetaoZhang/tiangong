@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Html, Float, ContactShadows } from '@react-three/drei'
 import * as THREE from 'three'
@@ -49,6 +49,22 @@ function CameraRig({ viewPreset }) {
   return null
 }
 
+// 热点放行闸门：Canvas 内 useFrame 计数 3 帧后触发 onReady
+// 保证相机投影矩阵、视图尺寸、Float 初始偏移都已稳定，热点投影位置准确
+function HotspotGate({ onReady }) {
+  const frames = useRef(0)
+  const done = useRef(false)
+  useFrame(() => {
+    if (done.current) return
+    frames.current++
+    if (frames.current >= 3) {
+      done.current = true
+      onReady()
+    }
+  })
+  return null
+}
+
 export default function Scene3D({ artifact }) {
   const highlightedPartId = useStore((s) => s.highlightedPartId)
   const selectedPartId = useStore((s) => s.selectedPartId)
@@ -58,6 +74,11 @@ export default function Scene3D({ artifact }) {
   const viewPreset = useStore((s) => s.viewPreset)
   const selectPart = useStore((s) => s.selectPart)
   const quality = useStore((s) => s.quality)
+
+  // 热点放行：用 Canvas 内 useFrame 帧计数触发，确保相机/投影矩阵已稳定更新
+  // setTimeout 不可靠（Canvas 首帧时机不固定），帧计数能保证矩阵已计算完毕
+  const [hotspotsReady, setHotspotsReady] = useState(false)
+  useEffect(() => { setHotspotsReady(false) }, [artifact.id])
 
   const simSpeed = simulate ? simParam : 0
 
@@ -76,6 +97,7 @@ export default function Scene3D({ artifact }) {
       frameloop="always"
     >
       <CameraRig viewPreset={viewPreset} />
+      <HotspotGate onReady={() => setHotspotsReady(true)} />
 
       {/* 灯光：纯本地灯光（去掉 drei Environment，避免从 githubusercontent 加载 HDR，确保国内可访问）
           主光塑造体积 + 暖色补光压暗部 + 半球光提供环境层次 */}
@@ -141,6 +163,27 @@ export default function Scene3D({ artifact }) {
               onSelectPart={handleSelectPart}
             />
           )}
+
+          {/* 热点标记 —— 放在 Float+scale group 内部，与模型同浮动同缩放，位置始终对齐 */}
+          {hotspotsReady && artifact.parts.map((p) => (
+            <Hotspot
+              key={p.id}
+              position={p.hotspot}
+              partId={p.id}
+              name={p.name}
+              active={highlightedPartId === p.id || selectedPartId === p.id}
+              onClick={() => handleSelectPart(p.id)}
+              onHover={(on) => {
+                // 悬停热点 → 临时高亮部件（不影响已选中的）
+                const st = useStore.getState()
+                if (on) {
+                  st.setHighlight(p.id, 'part')
+                } else if (st.highlightSource === 'part' && st.selectedPartId !== p.id) {
+                  st.setHighlight(null, null)
+                }
+              }}
+            />
+          ))}
         </group>
       </Float>
 
@@ -154,27 +197,6 @@ export default function Scene3D({ artifact }) {
         far={3}
         color="#3A2518"
       />
-
-      {/* 热点标记 */}
-      {artifact.parts.map((p) => (
-        <Hotspot
-          key={p.id}
-          position={p.hotspot}
-          partId={p.id}
-          name={p.name}
-          active={highlightedPartId === p.id || selectedPartId === p.id}
-          onClick={() => handleSelectPart(p.id)}
-          onHover={(on) => {
-            // 悬停热点 → 临时高亮部件（不影响已选中的）
-            const st = useStore.getState()
-            if (on) {
-              st.setHighlight(p.id, 'part')
-            } else if (st.highlightSource === 'part' && st.selectedPartId !== p.id) {
-              st.setHighlight(null, null)
-            }
-          }}
-        />
-      ))}
 
       <OrbitControls
         enablePan={true}

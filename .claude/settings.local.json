@@ -11,7 +11,15 @@
       "mcp__chrome-devtools__take_screenshot",
       "mcp__chrome-devtools__hover",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5180/)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(open *)",
+      "Bash(npm run *)",
+      "WebSearch",
+      "Bash(curl -s http://localhost:5180)",
+      "Bash(osascript *)",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs kill -9)",
+      "Bash(chrome-devtools-mcp --help)"
     ]
   }
 }
